@@ -1,0 +1,1465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YonWork AI Estimator</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --ink:#1C1C1E;--ink2:#48484A;--muted:#86868B;
+  --red:#E3202C;--red-deep:#B3121E;--red-tint:rgba(227,32,44,.09);--red-tint2:rgba(227,32,44,.15);
+  --grad:linear-gradient(135deg,#FF5B48 0%,#E3172A 100%);
+  --amber:#9A5A06;--amber-tint:rgba(240,150,40,.17);
+  --teal:#0B6F63;--teal-tint:rgba(20,170,150,.15);
+  --line:rgba(20,20,40,.09);
+  --fill:rgba(255,255,255,.6);
+  --glass:radial-gradient(140% 90% at 0% 0%,rgba(255,255,255,.55),rgba(255,255,255,0) 42%),linear-gradient(160deg,rgba(255,255,255,.72),rgba(255,255,255,.46));
+  --glass-hi:radial-gradient(140% 90% at 0% 0%,rgba(255,255,255,.6),rgba(255,255,255,0) 42%),linear-gradient(160deg,rgba(255,255,255,.9),rgba(255,255,255,.74));
+  --blur:blur(28px) saturate(190%);
+  --edge:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(255,255,255,.5),inset 0 -1px 1px rgba(255,255,255,.25);
+  --lift:0 1px 2px rgba(20,20,40,.04),0 12px 30px -14px rgba(20,20,40,.16);
+  --r:22px;
+  --c1:#D72631;--c2:#D68A00;--c3:#3D5AFE;--c4:#0B8F80;--c5:#A64AC9;
+  --ease:cubic-bezier(.2,.9,.25,1);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:#F4F4F6;min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(44vw 38vw at 0% -8%,rgba(255,110,90,.13),transparent 62%),
+  radial-gradient(40vw 34vw at 104% 0%,rgba(255,185,165,.16),transparent 62%),
+  radial-gradient(50vw 44vw at 80% 110%,rgba(190,198,222,.30),transparent 62%),
+  radial-gradient(40vw 36vw at -4% 100%,rgba(222,226,238,.45),transparent 62%),
+  linear-gradient(180deg,#F8F8FA,#F1F1F4)}
+button,input{font:inherit;color:inherit}
+button{-webkit-tap-highlight-color:transparent}
+.num{font-variant-numeric:tabular-nums}
+.glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--edge),var(--lift);border-radius:var(--r)}
+.wrap{max-width:1480px;margin:0 auto;padding:12px 28px 64px}
+
+/* top bar */
+.top{position:sticky;top:12px;z-index:30;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 12px;border-radius:20px;margin-bottom:14px}
+.mark{width:36px;height:36px;border-radius:11px;background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 14px -4px rgba(227,32,44,.55);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:.02em;flex:none}
+.top h1{margin:0 6px 0 2px;font-size:18px;line-height:1.15;font-weight:750;letter-spacing:-.015em;flex:1;min-width:0}
+.top h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-flex;background:var(--fill);border-radius:999px;padding:3px;box-shadow:inset 0 0 0 1px var(--line);flex:none}
+.pill button{border:0;background:none;padding:6px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink2);transition:background .2s,color .2s}
+.pill button.on{background:#fff;color:var(--red);box-shadow:0 1px 3px rgba(20,20,40,.15)}
+.btn{border:0;background:var(--fill);box-shadow:inset 0 0 0 1px var(--line);border-radius:999px;padding:8px 15px;font-weight:600;font-size:13.5px;color:var(--ink2);cursor:pointer;transition:transform .1s ease-out,background .2s;flex:none;white-space:nowrap}
+.btn:hover{background:#fff}
+.btn.primary{background:var(--grad);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 18px -6px rgba(227,32,44,.6)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn:active,.chip:active,.seg button:active,.stepper button:active,.agent:active,.erp button:active,.check:active,.pill button:active{transform:scale(.96);transition:transform 80ms ease-out}
+
+/* layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid2.one{grid-template-columns:1fr}
+.card{padding:16px 18px 18px}
+.chead{display:flex;align-items:center;gap:10px}
+.badge{width:26px;height:26px;border-radius:8px;background:rgba(20,20,40,.06);color:var(--ink2);font-weight:750;font-size:13px;display:grid;place-items:center;flex:none}
+.chead h2{margin:0;font-size:15.5px;line-height:1.2;font-weight:700;letter-spacing:-.005em}
+.chead .sub{font-size:12px;color:var(--muted);margin-top:1px}
+.chead .grow{flex:1;min-width:0}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;letter-spacing:.02em;line-height:1.3}
+.tag.yearly{background:var(--red-tint);color:var(--red-deep)}
+.tag.onetime{background:var(--amber-tint);color:var(--amber)}
+.tag.payg{background:var(--teal-tint);color:var(--teal)}
+.tag.tbc{background:var(--amber-tint);color:var(--amber);font-size:10px}
+.amount{font-size:28px;font-weight:780;margin:10px 0 12px;letter-spacing:-.022em;line-height:1.1}
+.caption{font-size:12.5px;color:var(--muted)}
+.ctl{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ctl .caption{flex:1;min-width:130px}
+.stepper{display:inline-flex;align-items:center;background:var(--fill);border-radius:999px;padding:3px;box-shadow:inset 0 0 0 1px var(--line);flex:none}
+.stepper button{width:32px;height:32px;border-radius:50%;border:0;background:#fff;color:var(--red);font-size:18px;font-weight:700;cursor:pointer;line-height:1;box-shadow:0 1px 3px rgba(20,20,40,.14)}
+.stepper input{width:64px;border:0;background:none;text-align:center;font-size:17px;font-weight:650;outline:none}
+.hint{display:flex;gap:8px;align-items:center;background:rgba(20,20,40,.04);color:var(--ink2);border-radius:12px;padding:8px 10px;font-size:12.5px;font-weight:500;margin-top:10px}
+.warn,.info,.err{display:flex;gap:8px;align-items:flex-start;border-radius:12px;padding:9px 11px;font-size:12.5px;font-weight:500;margin-top:10px}
+.warn{background:var(--amber-tint);color:var(--amber)}
+.info{background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2)}
+.err{background:var(--red-tint2);color:var(--red-deep);font-weight:650;align-items:center}
+.amtrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 12px;flex-wrap:wrap}
+.amtrow .amount{margin:0}
+.amtrow .seg{margin:0;flex:0 1 270px;min-width:220px}
+.caption .tip{display:block;color:var(--ink2);font-weight:550;margin-top:2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--fill);border-radius:14px;padding:4px;margin-bottom:12px;box-shadow:inset 0 0 0 1px var(--line)}
+.seg button{border:0;background:none;border-radius:11px;padding:6px 8px;font-weight:650;color:var(--ink2);cursor:pointer;line-height:1.2;font-size:13.5px;transition:background .2s,color .2s}
+.seg button small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--red);box-shadow:0 1px 4px rgba(20,20,40,.16)}
+
+/* ERP platform */
+.plat{display:flex;align-items:center;gap:16px;padding:12px 12px 12px 18px}
+.plat .lbl{flex:none}
+.plat .lbl b{display:block;font-size:15px;font-weight:700}
+.plat .lbl span{font-size:12px;color:var(--muted)}
+.erp{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--fill);padding:4px;border-radius:16px;box-shadow:inset 0 0 0 1px var(--line);max-width:600px;margin-left:auto}
+.erp button{border:0;background:none;border-radius:12px;padding:8px 10px;cursor:pointer;display:flex;align-items:baseline;gap:8px;justify-content:center;color:var(--ink2);transition:background .25s,color .25s}
+.erp button b{font-size:15px;font-weight:800;letter-spacing:.02em}
+.erp button span{font-size:12.5px;font-weight:550;opacity:.75}
+.erp button.on{background:#fff;color:var(--red);box-shadow:0 1px 4px rgba(20,20,40,.14),inset 0 0 0 1px rgba(227,32,44,.25)}
+.erp button.on span{opacity:.85;color:var(--ink2)}
+
+/* switch */
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.switch input{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:999px;background:rgba(20,20,40,.24);position:relative;cursor:pointer;flex:none;transition:background .25s;margin:0}
+.switch input::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:transform .3s var(--ease)}
+.switch input:checked{background:var(--red)}
+.switch input:checked::after{transform:translateX(20px)}
+.label{font-weight:650;color:var(--ink);font-size:14px}
+
+/* section 3: chosen workflows */
+.chosen{display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
+.chosen .it{display:flex;align-items:center;gap:10px;min-height:46px;border-top:1px solid var(--line);padding:5px 0}
+.chosen .it .t{flex:1;min-width:0;border:0;background:none;padding:0;text-align:left;cursor:pointer}
+.chosen .it .t b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chosen .it .t span{display:block;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chosen .it .t:hover b{color:var(--red)}
+.x{border:0;background:none;color:#C2B0B4;font-size:18px;cursor:pointer;line-height:1;padding:2px;border-radius:50%}
+.x:hover{color:var(--red)}
+.price{font-weight:700;white-space:nowrap;text-align:right}
+.price .tag{margin-left:6px;vertical-align:1px}
+.empty{font-size:12.5px;color:var(--muted);background:rgba(255,255,255,.45);border:1.5px dashed rgba(20,20,40,.18);border-radius:14px;padding:12px 14px;text-align:center}
+
+/* section 4: agents */
+.agents{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.agent{border:0;text-align:left;background:var(--fill);border-radius:16px;padding:12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--line);display:flex;flex-direction:column;gap:4px;transition:box-shadow .2s,background .2s;min-width:0}
+.agent .row{display:flex;align-items:center;gap:8px;min-width:0}
+.agent .ck{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(20,20,40,.25);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:900;flex:none;transition:background .2s}
+.agent b{font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent .alt{font-size:12px;color:var(--muted);padding-left:30px}
+.agent .p{font-size:16px;font-weight:750;padding-left:30px;margin-top:2px}
+.agent .p small{font-size:12px;font-weight:550;color:var(--muted)}
+.agent:hover{background:rgba(255,255,255,.8)}
+.agent.on{background:#fff;box-shadow:inset 0 0 0 1.5px var(--red),0 6px 16px -10px rgba(20,20,40,.25)}
+.agent.on .ck{background:var(--grad);box-shadow:none}
+#secAgent.need{box-shadow:var(--edge),0 0 0 2px rgba(227,32,44,.6),var(--lift)}
+.req{font-size:10.5px;font-weight:700;color:#fff;background:var(--grad);border-radius:999px;padding:3px 9px;white-space:nowrap}
+@keyframes nudge{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.nudge{animation:nudge .32s ease 2}
+
+/* catalogue */
+.cat-head{display:flex;align-items:baseline;gap:12px;margin:12px 4px 4px;flex-wrap:wrap}
+.cat-head h2{margin:0;font-size:20px;font-weight:750;letter-spacing:-.018em}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 2px 8px;margin:2px 0 4px;scrollbar-width:none}
+.chip{border:0;background:rgba(255,255,255,.62);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px var(--line);border-radius:999px;padding:7px 12px;font-weight:600;font-size:13px;color:var(--ink2);cursor:pointer;white-space:nowrap;display:flex;gap:6px;align-items:center;transition:background .2s,color .2s}
+.chip i{font-style:normal;font-size:11.5px;font-weight:700;background:var(--red-tint);color:var(--red-deep);border-radius:999px;padding:0 6px}
+.chip.on{background:#fff;color:var(--red-deep);box-shadow:inset 0 0 0 1.5px rgba(227,32,44,.45)}
+.chip.on i{background:var(--red-tint);color:var(--red-deep)}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+.wf{display:flex;gap:12px;align-items:flex-start;padding:14px 14px 12px;border-radius:18px;transition:box-shadow .2s,transform .2s var(--ease)}
+.wf:hover{transform:translateY(-1px)}
+.wf.sel{box-shadow:var(--edge),inset 0 0 0 1.5px rgba(227,32,44,.55),var(--lift)}
+.check{width:24px;height:24px;border-radius:7px;border:0;box-shadow:inset 0 0 0 2px rgba(20,20,40,.22);background:rgba(255,255,255,.75);cursor:pointer;flex:none;display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px;margin-top:1px;padding:0;transition:background .2s}
+.wf.sel .check{background:var(--grad);box-shadow:none}
+.open{flex:1;display:flex;flex-direction:column;gap:8px;border:0;background:none;text-align:left;cursor:pointer;padding:0;min-width:0}
+.open .t b{display:block;font-size:14px;font-weight:650;line-height:1.3}
+.open .t .alt{display:block;font-size:12px;color:var(--muted);margin-top:1px}
+.open .foot{display:flex;align-items:center;gap:8px;width:100%}
+.dom{display:inline-block;font-size:11px;font-weight:600;background:rgba(20,20,40,.04);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2);border-radius:999px;padding:2px 8px}
+.open .foot .price{margin-left:auto;font-size:13.5px}
+.wf.sel .open .foot .price{color:var(--red-deep)}
+.more{font-size:12px;font-weight:650;color:var(--red);white-space:nowrap}
+.open:hover .t b{color:var(--red-deep)}
+
+/* aside */
+.aside{position:sticky;top:80px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 92px);overflow:auto;padding:2px 2px 6px;margin:-2px;scrollbar-width:thin}
+.hero{border-radius:var(--r);padding:18px;color:var(--ink);background:var(--glass-hi);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);box-shadow:var(--edge),var(--lift);flex:none}
+.hero .l{font-size:13px;font-weight:650;color:var(--red-deep)}
+.hero .big{font-size:38px;font-weight:800;letter-spacing:-.028em;line-height:1.05;margin:4px 0 14px}
+.kpis{background:rgba(20,20,40,.035);border-radius:14px;box-shadow:inset 0 0 0 1px var(--line);padding:2px 12px}
+.kpi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0}
+.kpi + .kpi{border-top:1px solid var(--line)}
+.kpi .a{font-size:12.5px;font-weight:650;min-width:0;color:var(--ink2)}
+.kpi .a small{font-size:10.5px;font-weight:500;color:var(--muted);margin-left:6px}
+.kpi .v{font-size:15px;font-weight:780;letter-spacing:-.01em;white-space:nowrap}
+.hero .fine{font-size:11.5px;color:var(--muted);margin-top:10px}
+.alert{display:flex;gap:6px;align-items:center;background:var(--red-tint);color:var(--red-deep);border-radius:12px;padding:8px 10px;font-size:12.5px;font-weight:650;margin:-4px 0 12px;cursor:pointer;border:0;width:100%;text-align:left}
+.aside .card h2,.side-h{margin:0;font-size:15.5px;font-weight:700}
+.stack{display:flex;gap:2px;height:12px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.55);box-shadow:inset 0 0 0 1px var(--line);margin:12px 0 4px}
+.stack i{display:block;height:100%;min-width:4px}
+.rows{display:flex;flex-direction:column}
+.rowx{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.rowx:first-child{border-top:0}
+.rowx .dot{width:10px;height:10px;border-radius:3px}
+.rowx .nm{font-weight:600;font-size:13px;min-width:0}
+.rowx .nm small{display:block;font-weight:500;font-size:11px;color:var(--muted);margin-top:2px}
+.rowx .nm small .tag{font-size:9.5px;padding:1px 7px;margin-right:4px}
+.rowx .v{font-weight:750;text-align:right;font-size:14px;white-space:nowrap}
+.rowx .v .off{color:var(--muted);font-size:12.5px;font-weight:600}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.field{width:100%;min-width:0;border:0;background:var(--fill);box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:9px 11px;outline:none;font-size:13px;transition:box-shadow .15s,background .15s}
+.field:focus{box-shadow:inset 0 0 0 2px var(--red);background:#fff}
+
+/* detail sheet */
+.scrim{position:fixed;inset:0;z-index:50;background:rgba(20,20,30,.22);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:grid;place-items:center;padding:28px;opacity:0;transition:opacity .22s ease}
+.scrim.show{opacity:1}
+.sheet{width:min(760px,100%);max-height:min(88vh,860px);overflow:auto;border-radius:26px;background:var(--glass-hi);-webkit-backdrop-filter:blur(40px) saturate(190%);backdrop-filter:blur(40px) saturate(190%);box-shadow:var(--edge),0 30px 80px -20px rgba(120,10,25,.45);transform:translateY(16px) scale(.97);transition:transform .34s var(--ease);overscroll-behavior:contain}
+.scrim.show .sheet{transform:none}
+.sh-head{position:sticky;top:0;z-index:2;display:flex;gap:12px;align-items:flex-start;padding:18px 18px 12px 22px;background:linear-gradient(180deg,rgba(252,252,253,.96) 70%,rgba(252,252,253,0))}
+.sh-head h3{margin:6px 0 2px;font-size:21px;font-weight:750;letter-spacing:-.018em;line-height:1.2}
+.xbtn{width:32px;height:32px;border-radius:50%;border:0;background:rgba(20,20,40,.08);color:var(--ink2);font-size:15px;cursor:pointer;flex:none}
+.xbtn:hover{background:rgba(20,20,40,.14)}
+.sh-body{padding:0 22px 8px}
+.h3{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.sh-body p{margin:0 0 6px;font-size:13.5px;color:var(--ink2)}
+.sh-body p.sum{font-weight:600;color:var(--ink);font-size:14.5px}
+.legend{display:flex;gap:14px;font-size:11.5px;font-weight:600;color:var(--ink2);margin:0 0 8px}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:5px}
+.steps{list-style:none;margin:0 0 6px;padding:0}
+.steps li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start;padding:4px 0;position:relative}
+.steps li::before{content:"";position:absolute;left:12px;top:30px;bottom:-4px;width:2px;background:rgba(20,20,40,.14);border-radius:2px}
+.steps li:last-child::before{display:none}
+.steps .n{width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center}
+.steps b{display:block;font-weight:650;font-size:13.5px;padding-top:3px}
+.steps em{display:block;font-style:normal;color:var(--muted);font-size:12.5px}
+.costs{background:rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px var(--line);border-radius:16px;margin:14px 0 10px}
+.costs > div{padding:11px 14px}
+.costs > div + div{border-top:1px solid var(--line)}
+.costs .k{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;font-weight:650;color:var(--ink2)}
+.costs .k b{font-size:14px;color:var(--ink)}
+.costs .note{font-size:12px;color:var(--muted)}
+.link{color:var(--red);font-weight:650;text-decoration:none;font-size:13.5px}
+.link:hover{text-decoration:underline}
+.sh-foot{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;padding:12px 18px 14px 22px;background:rgba(252,252,253,.9);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);box-shadow:inset 0 1px 0 var(--line)}
+.sh-foot .price{flex:1;text-align:left;font-size:17px}
+
+/* toast + mobile bar */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);opacity:0;z-index:60;padding:11px 18px;border-radius:999px;font-weight:650;font-size:13.5px;color:var(--red-deep);pointer-events:none;transition:opacity .2s,transform .32s var(--ease);background:var(--glass-hi)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.bar{display:none}
+
+/* FAQ + Terms views */
+.nav button{padding:6px 13px}
+.docs{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start;max-width:1200px;margin:0 auto}
+.toc{position:sticky;top:80px;padding:8px;border-radius:18px;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 92px);overflow:auto;scrollbar-width:thin}
+.toc button{border:0;background:none;text-align:left;padding:7px 10px;border-radius:10px;font-size:13px;font-weight:550;color:var(--ink2);cursor:pointer;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px;align-items:baseline;transition:background .15s,color .15s}
+.toc button:hover{background:rgba(20,20,40,.05)}
+.toc button.on{background:#fff;color:var(--red-deep);box-shadow:0 1px 3px rgba(20,20,40,.12)}
+.toc button i{font-style:normal;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.doccol{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dochead h2{margin:0 0 4px;font-size:22px;font-weight:750;letter-spacing:-.02em}
+.search{margin-top:12px;background:#fff;font-size:14px}
+.faqcat{padding:4px 20px 6px;scroll-margin-top:90px}
+.faqcat h3{margin:14px 0 2px;font-size:15px;font-weight:700}
+.qa + .qa{border-top:1px solid var(--line)}
+.qa summary{list-style:none;cursor:pointer;padding:12px 30px 12px 0;font-weight:600;font-size:14px;position:relative;border-radius:8px}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::after{content:"+";position:absolute;right:6px;top:9px;font-size:19px;font-weight:400;color:var(--muted);transition:transform .25s var(--ease)}
+.qa[open] summary::after{transform:rotate(45deg);color:var(--red)}
+.qa summary:hover{color:var(--red-deep)}
+.qa .ans{padding:0 0 14px;font-size:13.5px;color:var(--ink2);line-height:1.6}
+.tlink{border:0;background:var(--red-tint);color:var(--red-deep);font-size:11.5px;font-weight:650;border-radius:999px;padding:2px 9px;margin-left:2px;cursor:pointer;white-space:nowrap;vertical-align:1px}
+.tlink:hover{background:var(--red-tint2)}
+.terms{padding:26px 34px 32px;max-width:880px}
+.terms h2{font-size:24px;margin:0;font-weight:750;letter-spacing:-.022em}
+.terms .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 10px;color:var(--muted);font-size:12.5px}
+.terms .meta .btn{margin-left:auto;padding:6px 13px;font-size:12.5px}
+.terms section{scroll-margin-top:90px}
+.terms h3{font-size:15.5px;margin:24px 0 6px;font-weight:700;letter-spacing:-.005em}
+.terms ol{list-style:none;margin:0;padding:0}
+.terms li{display:grid;grid-template-columns:42px minmax(0,1fr);gap:4px;padding:5px 0;font-size:13.5px;line-height:1.6;color:var(--ink2)}
+.terms li b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+.zhnote{background:var(--red-tint);color:var(--red-deep);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;margin:4px 0 6px}
+.flink{color:var(--red-deep);font-weight:650;text-decoration:none;white-space:nowrap}
+.flink:hover{text-decoration:underline}
+body:not(.v-estimator) .bar{display:none!important}
+@media (max-width:1180px){
+  .layout{grid-template-columns:minmax(0,1fr) 320px}
+  .hero .big{font-size:32px}
+  .fields{grid-template-columns:1fr}
+}
+@media (min-width:981px) and (max-height:860px){
+  .card{padding:14px 16px 16px}
+  .amount{font-size:25px;margin:8px 0 10px}
+  .hero{padding:16px}
+  .hero .big{font-size:32px;margin-bottom:12px}
+  .rowx{padding:6px 0}
+}
+@media (max-width:980px){
+  .docs{grid-template-columns:1fr}
+  .toc{position:static;flex-direction:row;overflow-x:auto;max-height:none}
+  .toc button{white-space:nowrap;display:flex}
+  .terms{padding:20px}
+  .layout{grid-template-columns:1fr}
+  .aside{position:static;max-height:none;overflow:visible}
+  .top{position:static;flex-wrap:wrap}
+  .bar{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:40;width:calc(100% - 32px);max-width:560px;justify-content:space-between;align-items:center;border-radius:999px;padding:13px 20px;font-weight:600;color:var(--ink2);text-decoration:none;font-size:14px}
+  .bar b{color:var(--red);font-size:17px;font-weight:800}
+  .wrap{padding-bottom:100px}
+}
+@media (max-width:700px){
+  .wrap{padding:12px 14px 100px}
+  .grid2,.chosen,.agents,.list{grid-template-columns:1fr}
+  .plat{flex-direction:column;align-items:stretch}
+  .erp{max-width:none;margin:0}
+  .top h1 small{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation:none!important}}
+@media (prefers-reduced-transparency:reduce){.glass,.sheet,.chip,.scrim{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}.glass,.sheet{background:#FFFFFF}}
+@media print{.bar,.toast,.scrim{display:none!important}body:not(.v-estimator) .top,body:not(.v-estimator) .toc,.noprint{display:none!important}body:not(.v-estimator)::before{display:none}body:not(.v-estimator){background:#fff}body:not(.v-estimator) .glass{box-shadow:none!important;background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}body:not(.v-estimator) .docs{display:block}.terms{max-width:none;padding:0}.qa:not([open]) .ans{display:block}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top glass">
+    <div class="mark" aria-hidden="true">YW</div>
+    <h1><span data-t="title"></span><small data-t="subtitle"></small></h1>
+    <div class="pill nav" role="tablist" aria-label="Pages"><button data-view="estimator" data-t="vEst"></button><button data-view="faq" data-t="vFaq"></button><button data-view="terms" data-t="vTerms"></button></div>
+    <div class="pill" role="group" aria-label="Language">
+      <button data-lang="en">English</button><button data-lang="zh">简体中文</button>
+    </div>
+    <button class="btn" id="reset" data-t="reset"></button>
+    <button class="btn primary" id="xlsxBtn" data-t="export"></button>
+  </header>
+
+  <div class="layout" id="viewEst">
+    <main class="col">
+      <section class="glass plat">
+        <div class="lbl"><b data-t="erp"></b><span data-t="erpSub"></span></div>
+        <div class="erp" role="radiogroup" aria-label="ERP platform" id="erp"></div>
+      </section>
+
+      <div class="grid2">
+        <section class="glass card">
+          <div class="chead"><div class="badge">1</div><div class="grow"><h2 data-t="s1"></h2></div><span class="tag yearly" data-t="yearly"></span></div>
+          <div class="amount num" id="aLic"></div>
+          <div class="ctl">
+            <div class="stepper"><button data-step="users" data-d="-1" aria-label="−">−</button><input id="users" inputmode="numeric" class="num" aria-label="Users"><button data-step="users" data-d="1" aria-label="+">+</button></div>
+            <div class="caption" id="licNote"></div>
+          </div>
+        </section>
+        <section class="glass card">
+          <div class="chead"><div class="badge">2</div><div class="grow"><h2 data-t="s2"></h2></div><span class="tag onetime" id="tag2"></span></div>
+          <div class="amtrow">
+            <div class="amount num" id="aHw"></div>
+            <div class="seg" role="group"><button data-mode="local"><span data-t="local"></span><small data-t="localSub"></small></button><button data-mode="cloud"><span data-t="cloud"></span><small data-t="cloudSub"></small></button></div>
+          </div>
+          <div id="localBox">
+            <div class="ctl">
+              <div class="stepper"><button data-step="boxes" data-d="-1" aria-label="−">−</button><input id="boxes" inputmode="numeric" class="num" aria-label="AI Boxes"><button data-step="boxes" data-d="1" aria-label="+">+</button></div>
+              <div class="caption"><span id="hwNote"></span><span class="tip">💡 <span data-t="boxHint"></span></span></div>
+            </div>
+          </div>
+          <div id="cloudBox">
+            <div class="ctl">
+              <div class="stepper"><button data-step="packs" data-d="-1" aria-label="−">−</button><input id="packs" inputmode="numeric" class="num" aria-label="AU packs"><button data-step="packs" data-d="1" aria-label="+">+</button></div>
+              <div class="caption" id="auNote"></div>
+            </div>
+            <div class="hint">💡 <span id="auTotal"></span></div>
+          </div>
+        </section>
+      </div>
+
+      <section class="glass card">
+        <div class="chead"><div class="badge">3</div><div class="grow"><h2 data-t="s3"></h2><div class="sub" id="nSel"></div></div><span class="tag onetime" data-t="onetime"></span></div>
+        <div class="amount num" id="aWf"></div>
+        <div class="chosen" id="chosen"></div>
+        <div id="chosenEmpty" class="empty" data-t="chooseBelow"></div>
+        <div id="wfNotes"></div>
+      </section>
+
+      <div class="grid2" id="row45">
+        <section class="glass card" id="secAgent">
+          <div class="chead"><div class="badge">4</div><div class="grow"><h2 data-t="sAg"></h2><div class="sub" data-t="agentSub"></div></div><span class="req" data-t="required"></span><span class="tag yearly" data-t="yearly"></span></div>
+          <div class="amount num" id="aAg"></div>
+          <div class="agents" id="agents"></div>
+          <div id="agWarn"></div>
+        </section>
+        <section class="glass card" id="secMaint">
+          <div class="chead"><div class="badge" id="mtBadge">4</div><div class="grow"><h2 data-t="sMt"></h2></div><span class="tag yearly" data-t="yearly"></span></div>
+          <div class="amount num" id="aMt"></div>
+          <label class="switch"><span><span class="label" data-t="inclMaint"></span><br><span class="caption" id="mtNote"></span></span><input type="checkbox" id="maint"></label>
+        </section>
+      </div>
+
+      <section>
+        <div class="cat-head"><h2 data-t="catalogue"></h2><div class="caption" data-t="catalogueNote"></div></div>
+        <div class="chips" id="chips"></div>
+        <div class="list" id="list"></div>
+      </section>
+    </main>
+
+    <aside class="aside" id="totals">
+      <div class="hero">
+        <div class="l" data-t="first"></div>
+        <div class="big num" id="tFirst"></div>
+        <button class="alert" id="heroAlert" data-goto="agent" hidden>⚠️ <span data-t="agentNeed"></span></button>
+        <div class="kpis">
+          <div class="kpi"><div class="a"><span data-t="recurring"></span><small id="recSub"></small></div><div class="v num" id="tRec"></div></div>
+          <div class="kpi"><div class="a"><span data-t="oneTime"></span><small>2 + 3</small></div><div class="v num" id="tOne"></div></div>
+          <div class="kpi"><div class="a"><span data-t="three"></span><small data-t="threeSub"></small></div><div class="v num" id="tThree"></div></div>
+        </div>
+        <div class="fine"><span id="fine"></span> <a class="flink" href="#terms" data-t="seeTerms"></a></div>
+      </div>
+      <div class="glass card">
+        <h2 data-t="breakdown"></h2>
+        <div class="stack" id="stack" role="img"></div>
+        <div class="rows" id="rows"></div>
+        <div id="totNotes"></div>
+      </div>
+      <div class="glass card">
+        <h2 data-t="client"></h2>
+        <div class="caption" data-t="clientNote"></div>
+        <div class="fields">
+          <input class="field" id="company" autocomplete="organization">
+          <input class="field" id="contact" autocomplete="name">
+          <input class="field" id="email" type="email" autocomplete="email">
+          <input class="field" id="manager">
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="docs" id="viewFaq" hidden>
+    <nav class="toc glass" id="faqToc" aria-label="FAQ topics"></nav>
+    <div class="doccol">
+      <div class="glass card dochead"><h2 data-t="faqTitle"></h2><div class="caption" data-t="faqSub"></div><input class="field search" id="faqQ" type="search" autocomplete="off"></div>
+      <div id="faqList" class="doccol"></div>
+    </div>
+  </div>
+
+  <div class="docs" id="viewTerms" hidden>
+    <nav class="toc glass" id="termsToc" aria-label="Sections"></nav>
+    <article class="glass card terms" id="termsDoc"></article>
+  </div>
+</div>
+<a class="bar glass" href="#totals"><span data-t="first"></span><b class="num" id="barTotal"></b></a>
+<div class="scrim" id="sheet" hidden><div class="sheet" id="sheetBox" role="dialog" aria-modal="true" aria-labelledby="shTitle"></div></div>
+<div class="toast glass" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const CONFIG = { licence: 96, box: 20000, usersPerBox: 5, auPack: 300, auPerPack: 20000, maxPacks: 9999, rate: 950, maintRate: 0.10, years: 3, maxUsers: 9999, maxBoxes: 999,
+  caseSite: "https://chunnsshing.github.io/yonyou-ai-cases/#/case/" };
+const ERPS = [["ys", "YS", "YonSuite"], ["yb", "YB", "YonBIP"], ["ncc", "NCC", "NC Cloud"]];
+/* NCC only. Yearly fee per agent. */
+const AGENTS = [
+  { id: "finance", en: "Finance Agent", zh: "财务智能体", price: 8100 },
+  { id: "scm", en: "SCM Agent", zh: "供应链智能体", price: 4200 },
+];
+const WORKFLOWS = [{"id":"sales-po-email-to-do","d":"sales","en":"Customer PO Email to Delivery","zh":"客户PO邮件到发货单全自动","sum":"PO emails become quotation and sales order; approve by reply; DO when stock allows","desc":"Customers email purchase orders in the body, as a PDF or as a spreadsheet, usually with product names and quantities only, and one name can map to several SKUs. Sales reads each email, settles SKU and price, then builds the quotation and sales order by hand. Approval means logging into the ERP, and a stock shortfall is often discovered late.","sum_zh":"PO邮件自动生成报价单和销售订单；回复即可审批；库存充足即生成发货单","desc_zh":"客户在邮件正文、PDF或电子表格中发送采购订单，通常只有品名和数量，而一个品名可能对应多个SKU。销售需逐封阅读邮件，确定SKU和价格，再手工制作报价单和销售订单。审批要登录ERP，库存不足也往往发现得很晚。","flow":[{"s":"Customer sends PO","n":"Body, PDF or spreadsheet","s_zh":"客户发送PO","n_zh":"正文、PDF或电子表格","l":"user"},{"s":"Read the PO","n":"Customer, items, qty, delivery date","s_zh":"读取PO","n_zh":"客户、品项、数量、交期","l":"ai"},{"s":"Resolve SKU","n":"From this customer's past orders","s_zh":"确定SKU","n_zh":"依据该客户历史订单","l":"ai"},{"s":"Create quotation","n":"Priced from the list, emailed out","s_zh":"生成报价单","n_zh":"按价目表定价并邮件发出","l":"erp"},{"s":"Convert to SO","n":"Straight from the SQ, pending approval","s_zh":"转为销售订单","n_zh":"由报价单直接生成，待审批","l":"erp"},{"s":"Approve by reply","n":"2pm daily digest; reply to approve","s_zh":"回复审批","n_zh":"每日下午2点汇总；回复即审批","l":"user"},{"s":"Check stock","n":"Reads the reply, checks each line","s_zh":"检查库存","n_zh":"读取回复，逐行检查","l":"ai"},{"s":"Create DO","n":"Or a shortfall report if short","s_zh":"生成发货单","n_zh":"库存不足则出具缺货报告","l":"erp"}],"price":8075},{"id":"ana-marketing-intelligence","d":"analytics","en":"Marketing Intelligence Brief","zh":"营销洞察简报","sum":"Finds significant sales changes and the SKUs, customers and channels driving them","desc":"Marketing wants ERP and marketplace sales data turned into insight it can act on: whether growth came from a campaign or something else, which SKUs, customers and channels drive a change, and which lines are fast or slow movers. It also wants one daily view across all products. Today the analysis is done by hand.","sum_zh":"识别显著的销售变化，以及驱动变化的SKU、客户和渠道","desc_zh":"市场部希望将ERP和电商平台的销售数据转化为可执行的洞察：增长来自促销活动还是其他因素，哪些SKU、客户和渠道带动了变化，哪些产品畅销、哪些滞销。同时希望每天有一个覆盖全部产品的统一视图。目前这些分析全靠手工完成。","flow":[{"s":"Scheduled run","n":"Daily or weekly","s_zh":"定时运行","n_zh":"每日或每周","l":"ai"},{"s":"Read ERP sales","n":"By SKU, customer, channel, price","s_zh":"读取ERP销售","n_zh":"按SKU、客户、渠道、价格","l":"erp"},{"s":"Read marketplaces","n":"Shopee, Lazada and other platforms","s_zh":"读取电商平台","n_zh":"Shopee、Lazada等平台","l":"ai"},{"s":"Detect changes","n":"Period comparison, attributed to SKU and channel","s_zh":"识别变化","n_zh":"期间对比，归因至SKU与渠道","l":"ai"},{"s":"Campaign impact","n":"Campaign window vs baseline; fast and slow movers","s_zh":"活动成效","n_zh":"活动期与基线对比；畅销与滞销","l":"ai"},{"s":"Marketing reviews","n":"Changes, drivers, risks, opportunities","s_zh":"市场部审阅","n_zh":"变化、驱动因素、风险、机会","l":"user"}],"price":3800,"tbc":true},{"id":"sc-replenishment-forecast","d":"supply-chain","en":"Smart Replenishment Forecast","zh":"智能补货预测","sum":"Forecasts demand and stock-out dates by SKU, with a latest order date and suggested quantity","desc":"Procurement has to order the right quantity at the right time, avoiding both stock-outs and overstock. That means weighing stock on hand, sales history, incoming POs, supplier lead times, MOQ, batch expiry and planned campaigns. Today this is compiled by hand and judged on experience, and warehouse stock is not updated in the system every day.","sum_zh":"按SKU预测需求和断货日期，给出最晚下单日及建议采购量","desc_zh":"采购需要在合适的时间订购合适的数量，既要避免断货，也要避免积压。这需要综合考虑现有库存、销售历史、在途PO、供应商交期、最小起订量、批次效期和计划中的促销活动。目前全靠手工汇总、凭经验判断，而且仓库库存并非每天都在系统中更新。","flow":[{"s":"Scheduled run","n":"Daily or weekly","s_zh":"定时运行","n_zh":"每日或每周","l":"ai"},{"s":"Read stock & sales","n":"On hand, sales history, open POs","s_zh":"读取库存与销售","n_zh":"现存量、销售历史、未完成PO","l":"erp"},{"s":"Supply inputs","n":"Lead time, MOQ, expiry, campaigns","s_zh":"补充参数","n_zh":"交期、MOQ、效期、促销活动","l":"user"},{"s":"Forecast demand","n":"Per SKU, with days of cover","s_zh":"预测需求","n_zh":"按SKU，含可供天数","l":"ai"},{"s":"Latest order date","n":"Stock-out date minus lead time","s_zh":"最晚下单日","n_zh":"断货日期减去交期","l":"ai"},{"s":"Recommend qty","n":"MOQ-aware; flags slow movers","s_zh":"建议数量","n_zh":"考虑MOQ；标出滞销品","l":"ai"},{"s":"Buyer raises POs","n":"Reviews and orders","s_zh":"采购员下单","n_zh":"审核后下PO","l":"user"}],"price":4275},{"id":"fin-ecommerce-settlement-recon","d":"finance","en":"Marketplace Settlement Recon","zh":"电商平台结算自动对账","sum":"Payouts split into fees and matched to orders, invoices, receipts; finance sees exceptions","desc":"The company sells on Shopee, Lazada, Shopify and TikTok Shop, with thousands of transactions a month. Platform payouts are net of commissions, vouchers and refunds, so finance first deducts platform charges to get the actual amount, then matches each one against orders, invoices and receipts in the ERP before posting.","sum_zh":"平台回款拆分费用，自动匹配订单、发票和收款；财务只需处理异常","desc_zh":"公司在Shopee、Lazada、Shopify和TikTok Shop销售，每月交易数以千计。平台回款已扣除佣金、优惠券和退款，财务需先扣减平台费用得出实收金额，再逐笔与ERP中的订单、发票和收款核对后才能入账。","flow":[{"s":"Provide reports","n":"Settlement and payout reports per platform","s_zh":"提供报表","n_zh":"各平台结算及回款报表","l":"user"},{"s":"Parse settlements","n":"Commissions, vouchers, refunds, adjustments","s_zh":"解析结算","n_zh":"佣金、优惠券、退款、调整","l":"ai"},{"s":"Read ERP records","n":"Orders, invoices and receipts","s_zh":"读取ERP记录","n_zh":"订单、发票和收款","l":"erp"},{"s":"Match each line","n":"Order, invoice, payment, settlement","s_zh":"逐笔匹配","n_zh":"订单、发票、付款、结算","l":"ai"},{"s":"Auto-post","n":"High-confidence matches posted with fee lines","s_zh":"自动入账","n_zh":"高置信度匹配连同费用行入账","l":"erp"},{"s":"Finance reviews","n":"Exceptions only, each with a reason","s_zh":"财务审核","n_zh":"仅处理异常，并附原因","l":"user"}],"price":4750},{"id":"ana-management-brief","d":"analytics","en":"Management Exception Brief","zh":"管理层异常简报","sum":"Rolls up open exceptions and major changes from each workflow, ranked by impact, into one brief","desc":"Management needs a view of performance, risks and exceptions, but the information is spread across sales, finance, warehouse, procurement and marketing reports that have to be read one by one. This scenario sits on top of the order, reconciliation, fulfilment, replenishment and marketing workflows once they produce output.","sum_zh":"汇总各业务流程中未处理的异常和重大变化，按影响排序，形成一份简报","desc_zh":"管理层需要掌握经营表现、风险和异常，但信息分散在销售、财务、仓库、采购和市场报表中，只能逐份查阅。该场景建立在订单、对账、发货、补货和营销流程之上，待这些流程产出结果后即可运行。","flow":[{"s":"Collect outputs","n":"Orders, recon, fulfilment, replenishment, marketing","s_zh":"收集输出","n_zh":"订单、对账、发货、补货、营销","l":"ai"},{"s":"Gather exceptions","n":"Unresolved exceptions and major changes","s_zh":"汇总异常","n_zh":"未解决异常与重大变化","l":"ai"},{"s":"Rank by impact","n":"Ordered by business impact","s_zh":"按影响排序","n_zh":"按业务影响排列","l":"ai"},{"s":"Management reviews","n":"Drill down to the source workflow","s_zh":"管理层审阅","n_zh":"可下钻至源流程","l":"user"}],"price":3325,"tbc":true},{"id":"fin-month-end-invoice","d":"finance","en":"Month-end Invoice Generation","zh":"月结发票自动生成","sum":"Each customer's usage is cut off on its own billing cycle, priced on its contract terms and drafted on the invoice template","desc":"Customers bill on different cycles (15th to 14th, 25th to 24th), and leased RFID linen, customer-owned goods and COG each use their own calculation. Month-end means chasing unsubmitted DOs, merging three methods onto one invoice, applying each customer's pricing rules, surcharge and GST, then formatting it all by hand.","sum_zh":"按每个客户各自的账期截取用量，依合同条款计价，并生成发票草稿","desc_zh":"客户账期各不相同（如15日至14日、25日至24日），租赁RFID布草、客户自有物品和COG各有计算方式。每到月末，要追未提交的送货单，把三种计算合并到一张发票，再逐个套用客户的定价规则、附加费和消费税，最后手工排版。","flow":[{"s":"Month-end run","n":"Per customer, on its own billing cycle","s_zh":"月末运行","n_zh":"按客户各自的账期","l":"user"},{"s":"Read usage data","n":"Cut off by billing cycle","s_zh":"读取用量数据","n_zh":"按账期截取","l":"erp"},{"s":"Check pending DOs","n":"Flag DOs not yet submitted","s_zh":"检查待提交送货单","n_zh":"标记尚未提交的送货单","l":"ai"},{"s":"Merge L / R / COG","n":"Each method calculated, then one invoice","s_zh":"合并 L / R / COG","n_zh":"分别计算后合并为一张发票","l":"ai"},{"s":"Read contract terms","n":"Pricing rules via the API","s_zh":"读取合同条款","n_zh":"通过API获取定价规则","l":"erp"},{"s":"Price, surcharge, GST","n":"Surcharge before 9% GST, rounded per line","s_zh":"计价、附加费、消费税","n_zh":"附加费先于9%消费税，逐行取整","l":"ai"},{"s":"Draft invoice","n":"On the template, with a usage report","s_zh":"发票草稿","n_zh":"按发票模板生成，附用量报告","l":"user"}],"case":false,"price":5700},{"id":"ana-month-end-analysis","d":"analytics","en":"Month-End Analysis & Forecast","zh":"月结数据分析与预测","sum":"After the close, data becomes month-on-month comparison, commentary, budget and forecast","desc":"Daily transactions (AP, AR, payroll) are reconciled against bank and collections and then closed. Today the output is system reports and Excel, and a set of analysis views is rebuilt by hand each month. There are two routes: YonWork reads the close directly, or reads from a BI layer loaded first. Outputs are the same; they differ in later flexibility and up-front build.","sum_zh":"月结完成后，数据自动生成环比对比、分析说明、预算与预测","desc_zh":"日常交易（应付、应收、薪资）与银行及收款对账后完成月结。目前产出的是系统报表和Excel，每月还要手工重做一套分析视图。实施有两种路径：YonWork直接读取月结数据，或先加载到BI层再读取。两者产出相同，区别在于后续灵活性和前期搭建投入。","flow":[{"s":"Transactions","n":"AP, AR, payroll","s_zh":"日常交易","n_zh":"应付、应收、薪资","l":"erp"},{"s":"Auto reconcile","n":"Bank and collections","s_zh":"自动对账","n_zh":"银行与收款","l":"erp"},{"s":"Month-end close","n":"The closed data set","s_zh":"月末结账","n_zh":"已结账数据集","l":"erp"},{"s":"Read the close","n":"Directly, or via a BI layer","s_zh":"读取月结","n_zh":"直接读取或经BI层","l":"ai"},{"s":"Organise & compare","n":"Month on month","s_zh":"整理对比","n_zh":"月度环比","l":"ai"},{"s":"Brief analysis","n":"Explains variances; rolling forecast","s_zh":"简要分析","n_zh":"解释差异；滚动预测","l":"ai"},{"s":"Review analysis","n":"Comparison, commentary, forecast","s_zh":"审阅分析","n_zh":"对比、说明、预测","l":"user"}],"price":3800,"tbc":true},{"id":"ana-product-sales-by-branch","d":"analytics","en":"Monthly Product Sales","zh":"月度产品销售看板","sum":"Last month's sales issues ranked by product, then one page per product, same layout every month","desc":"At the start of each month, management wants to know how much of each product sold last month. Today the sales issue documents are exported, then pivoted, sorted and charted by hand in Excel, so the layout changes each month and months are hard to compare.","sum_zh":"上月销售出库按产品排名，并为每个产品单列一页，版式每月统一","desc_zh":"每月初，管理层想了解上月各产品的销量。目前需导出销售出库单据，再在Excel中手工透视、排序和制图，因此每月版式不一，难以跨月对比。","flow":[{"s":"Ask for last month","n":"Defaults to the last full month","s_zh":"查询上月","n_zh":"默认上一个完整月","l":"user"},{"s":"Read sales issues","n":"Product Issue transactions only","s_zh":"读取销售出库","n_zh":"仅限产品出库交易","l":"erp"},{"s":"Aggregate and rank","n":"By product, high to low","s_zh":"汇总排名","n_zh":"按产品，由高到低","l":"ai"},{"s":"View the dashboard","n":"Ranking page, then one page per product","s_zh":"查看看板","n_zh":"排名页，及每个产品一页","l":"user"}],"price":3800},{"id":"fin-company-financial-overview","d":"finance","en":"Company Financial Overview","zh":"公司财务状况一页总览","sum":"Ask how the company is doing; GL, AR/AP, cash flow and bank balances become a one-page overview","desc":"When management asks how the company is doing, finance pulls GL balances, AR and AP ageing, cash flow, bank balances, fixed assets and inventory cost one by one, then builds a report. The data spans several modules, the report is rebuilt by hand each time, and it is soon out of date.","sum_zh":"一句话询问公司经营状况，总账、应收应付、现金流和银行余额汇总为一页总览","desc_zh":"管理层询问公司经营状况时，财务需逐一提取总账余额、应收应付账龄、现金流、银行余额、固定资产和存货成本，再编制报告。数据横跨多个模块，每次都要手工重做，而且很快就会过时。","flow":[{"s":"Ask for the overview","n":"Optional period; defaults to the current one","s_zh":"请求总览","n_zh":"可选期间，默认当期","l":"user"},{"s":"Read finance data","n":"GL, AR/AP, cash flow, bank balances and more","s_zh":"读取财务数据","n_zh":"总账、应收应付、现金流、银行余额等","l":"erp"},{"s":"Summarise","n":"Cash, AR/AP, P&L, assets","s_zh":"汇总分析","n_zh":"现金、应收应付、损益、资产","l":"ai"},{"s":"View the overview","n":"One page with key points","s_zh":"查看总览","n_zh":"一页呈现关键要点","l":"user"}],"price":3800,"tbc":true},{"id":"fin-customer-credit-score","d":"finance","en":"Customer Credit Score","zh":"客户信用评分看板","sum":"Enter a customer; quotes, orders, invoices, receipts and AR become a 0–100 score","desc":"Judging a customer's credit means checking the credit limit, the last 12 months of quotations, orders, invoices and receipts, and AR ageing, then deciding from experience. The data sits across sales, finance and master data, and has to be pulled together again every time.","sum_zh":"输入客户，报价、订单、发票、收款和应收数据生成0–100信用评分","desc_zh":"评估客户信用需查看信用额度、近12个月的报价、订单、发票和收款，以及应收账龄，再凭经验判断。数据分散在销售、财务和主数据中，每次都要重新汇总。","flow":[{"s":"Ask about a customer","n":"Customer name or code","s_zh":"查询客户","n_zh":"客户名称或编码","l":"user"},{"s":"Find the customer","n":"Asks the user to pick if several match","s_zh":"定位客户","n_zh":"多个匹配时请用户选择","l":"ai"},{"s":"Read business data","n":"Limit, quotes, orders, invoices, receipts, AR","s_zh":"读取业务数据","n_zh":"额度、报价、订单、发票、收款、应收","l":"erp"},{"s":"Compute the score","n":"Five weighted factors; missing data flagged","s_zh":"计算评分","n_zh":"五项加权因子；缺失数据标注","l":"ai"},{"s":"View the dashboard","n":"Score, factor breakdown and raw data","s_zh":"查看看板","n_zh":"评分、因子明细及原始数据","l":"user"}],"price":5700},{"id":"fin-finance-qa-assistant","d":"finance","en":"Finance Q&A Service Assistant","zh":"财务综合问答智能客服","sum":"Staff ask about policies or system steps; AI answers from the knowledge base or raises a ticket","desc":"In finance shared services, staff keep asking finance about claim limits, travel policy and system steps. Today they search expense and treasury policy documents or click through layers of menus, and anything the knowledge base doesn't cover means finding the right place to raise it, so finance answers the same questions again and again.","sum_zh":"员工咨询制度或系统操作，AI依据知识库作答，无法解答时自动提单","desc_zh":"在财务共享服务中，员工经常向财务询问报销标准、差旅政策和系统操作。目前只能翻查费用和资金制度文件，或在多层菜单中逐级点找；知识库未覆盖的问题还得找到正确渠道反映，财务因此反复回答同样的问题。","flow":[{"s":"Employee asks","n":"Claim limits, travel policy or system steps","s_zh":"员工提问","n_zh":"报销标准、差旅政策或系统操作","l":"user"},{"s":"Search knowledge base","n":"Expense and treasury policies, system guides","s_zh":"检索知识库","n_zh":"费用与资金制度、系统指南","l":"ai"},{"s":"Answer","n":"Quotes the policy and suggests follow-up questions","s_zh":"智能作答","n_zh":"引用制度条款并推荐追问","l":"ai"},{"s":"Can it answer?","n":"Anything the knowledge base lacks becomes a ticket","s_zh":"能否解答？","n_zh":"知识库未覆盖则转为工单","l":"ai"},{"s":"Create ticket","n":"Classed as how-to or business request","s_zh":"创建工单","n_zh":"分为操作咨询或业务需求","l":"erp"},{"s":"Support handles it","n":"Ticket number, urgency and progress shown live","s_zh":"支持处理","n_zh":"实时显示工单号、紧急度与进度","l":"user"}],"price":4750},{"id":"sales-rate-card-quotation","d":"sales","en":"One-Line Rental Quotation","zh":"一句话生成租赁报价单","sum":"Name the equipment and customer; a rate-card quotation is created with its PDF attached","desc":"Customers ask for rates every day. Sales copies each line from the standard rate card by equipment type, adds the fixed terms, effective date and salesperson, and lays out a PDF by hand. A quotation often runs to dozens of lines, so copying and formatting take time, and rates or terms get mistyped or come from an old version.","sum_zh":"说出设备和客户，即可按价目表生成报价单并附上PDF","desc_zh":"客户每天都在询价。销售需按设备类型从标准价目表逐行复制，加上固定条款、生效日期和销售人员，再手工排版成PDF。一份报价单常有数十行，复制和排版费时，费率或条款也容易打错或用到旧版本。","flow":[{"s":"Ask for a quote","n":"Equipment types + customer, optional salesperson","s_zh":"请求报价","n_zh":"设备类型+客户，可选销售人员","l":"user"},{"s":"Parse and match","n":"Customer, salesperson, rate card rows","s_zh":"解析与匹配","n_zh":"客户、销售人员、价目表行","l":"ai"},{"s":"Confirm summary","n":"Customer, types, dates, line count","s_zh":"确认摘要","n_zh":"客户、类型、日期、行数","l":"user"},{"s":"Create quotation","n":"One line per rate card row","s_zh":"生成报价单","n_zh":"每个价目表行对应一行","l":"erp"},{"s":"Render the PDF","n":"Rate tables, remarks and full terms","s_zh":"生成PDF","n_zh":"费率表、备注及完整条款","l":"ai"},{"s":"Get the PDF","n":"Quote number; PDF attached to the record","s_zh":"获取PDF","n_zh":"报价单号；PDF附于单据","l":"user"}],"price":5225},{"id":"fin-invoice-pdf-export","d":"supply-chain","en":"Batch Upload & Generate to System","zh":"批量上传单据生成系统单据","sum":"Upload a batch of photos, PDFs or scans; each is checked against the ERP and, once approved, created as the right document","desc":"Orders, supplier POs and receipts arrive as photos, PDFs and scans, often mixed in one pile. Someone keys each one into the system by hand and checks names, items and prices against the master data line by line. One flow now covers Batch Photo Document Capture, PO from Photo and PDF Order to Sales Order.","sum_zh":"批量上传照片、PDF或扫描件；逐一与ERP数据核对，审批后自动生成对应单据","desc_zh":"订单、采购单和收货单以照片、PDF和扫描件形式到达，常常混在一起。过去需要有人逐张手工录入系统，并逐行核对名称、物料和价格。现在一个流程即可涵盖批量单据拍照识别入账、拍照生成采购订单和PDF订单生成销售订单。","flow":[{"s":"Batch upload","n":"Photos, PDFs or scans, mixed types","s_zh":"批量上传","n_zh":"照片、PDF或扫描件，可混合类型","l":"user"},{"s":"Read the documents","n":"Type recognised, fields extracted","s_zh":"识别单据","n_zh":"识别类型，提取字段","l":"ai"},{"s":"Read ERP data","n":"Customers, suppliers, items, prices","s_zh":"读取ERP数据","n_zh":"客户、供应商、物料、价格","l":"erp"},{"s":"Compare & suggest","n":"Line by line, with a fix for each difference","s_zh":"比对并建议","n_zh":"逐行比对，每处差异附修改建议","l":"ai"},{"s":"Approve","n":"Accept or edit each suggestion","s_zh":"审批确认","n_zh":"接受或修改每条建议","l":"user"},{"s":"Generate in the system","n":"Order, PO or receipt by document type","s_zh":"生成系统单据","n_zh":"按类型生成订单、采购单或收货单","l":"erp"},{"s":"Get the result","n":"Document numbers; failures itemised","s_zh":"查看结果","n_zh":"单据编号；失败项逐条列出","l":"user"}],"price":6175},{"id":"sc-material-price-monitor","d":"supply-chain","en":"Material Price Monitor","zh":"物料采购价格监控","sum":"Purchase prices vs international market prices, with target prices, savings, risk and news","desc":"Buyers and owners want to know whether they are overpaying. That means comparing each purchase order price with international market prices, then checking price trends and related news. It is all done by manual searching, so with many materials it is rarely done regularly and price rises are spotted late.","sum_zh":"采购价格对标国际市场价，给出目标价、节约空间、风险及相关新闻","desc_zh":"采购人员和老板想知道是否买贵了。这需要将每张采购订单的价格与国际市场价对比，再查看价格走势和相关新闻。目前全靠手工搜索，物料一多就很难定期执行，涨价往往发现得太晚。","flow":[{"s":"Start the monitor","n":"Filter by org, supplier or material if needed","s_zh":"启动监控","n_zh":"可按组织、供应商或物料筛选","l":"user"},{"s":"Read purchase orders","n":"Approved PO lines","s_zh":"读取采购订单","n_zh":"已审批的PO行","l":"erp"},{"s":"Find market prices","n":"International benchmarks, trend, outlook, news","s_zh":"查找市场价","n_zh":"国际基准价、走势、展望、新闻","l":"ai"},{"s":"Analyse","n":"Price gap, target price, potential saving","s_zh":"分析","n_zh":"价差、目标价、潜在节约","l":"ai"},{"s":"View the dashboard","n":"Actions ranked by money at stake","s_zh":"查看看板","n_zh":"按涉及金额排列行动建议","l":"user"}],"price":5225},{"id":"sc-procurement-analysis","d":"supply-chain","en":"Procurement Analysis Assistant","zh":"采购分析助理","sum":"Chat to analyse spend, supplier mix and fulfilment health, with scores, root causes and actions","desc":"Procurement spend, supplier performance and fulfilment data sit in separate systems with no single view. Abnormal spend is watched by hand, suppliers are judged on few dimensions, reports are compiled manually and key metrics can't be measured in real time, so procurement is managed inefficiently.","sum_zh":"通过对话分析采购支出、供应商结构和履约健康度，给出评分、根因与行动建议","desc_zh":"采购支出、供应商绩效和履约数据分散在不同系统中，缺乏统一视图。异常支出靠人工盯防，供应商评估维度单一，报告需手工编制，关键指标无法实时衡量，采购管理效率低下。","flow":[{"s":"Buyer asks","n":"Picks spend, supplier or fulfilment analysis","s_zh":"采购员提问","n_zh":"选择支出、供应商或履约分析","l":"user"},{"s":"Gather procurement data","n":"Spend, order fulfilment and supplier data","s_zh":"汇集采购数据","n_zh":"支出、订单履约和供应商数据","l":"erp"},{"s":"Score health metrics","n":"Weighted score from concentration, fulfilment rate and more","s_zh":"健康度评分","n_zh":"按集中度、履约率等加权评分","l":"ai"},{"s":"Rate the risk","n":"Metrics past their threshold are flagged high risk","s_zh":"风险评级","n_zh":"超过阈值的指标标为高风险","l":"ai"},{"s":"Write the report","n":"Score, root causes and recommended actions","s_zh":"撰写报告","n_zh":"评分、根因及建议行动","l":"ai"},{"s":"Buyer decides","n":"Optimise, replace or reallocate suppliers","s_zh":"采购员决策","n_zh":"优化、替换或调整供应商分配","l":"user"}],"price":4275,"tbc":true},{"id":"sc-agent-team-collaboration","d":"supply-chain","en":"Supply Chain Agent Team","zh":"供应链智能体团队协作","sum":"A supervisor agent assigns work to sales, procurement and production agents and reports back","desc":"A supply chain supervisor has to watch sales, purchase and production orders at once, looking up and chasing each overdue or abnormal item before compiling a report. A single AI agent is limited by its context window and can't handle this alone, so several agents need to share the work.","sum_zh":"主管智能体向销售、采购和生产智能体分派任务并汇总汇报","desc_zh":"供应链主管需要同时关注销售、采购和生产订单，逐一查询并跟催每个逾期或异常事项，再整理成报告。单个AI智能体受上下文窗口限制，难以独立完成，需要多个智能体分工协作。","flow":[{"s":"User gives instruction","n":"Asks for an order execution analysis in chat","s_zh":"用户下达指令","n_zh":"在对话中请求订单执行分析","l":"user"},{"s":"Query order data","n":"Sales, purchase and production order details","s_zh":"查询订单数据","n_zh":"销售、采购和生产订单明细","l":"erp"},{"s":"Analyse order status","n":"Supervisor agent reviews undelivered, overdue and abnormal orders","s_zh":"分析订单状态","n_zh":"主管智能体检查未交付、逾期和异常订单","l":"ai"},{"s":"Decide on handoffs","n":"Passes work to sales, procurement or production agents as needed","s_zh":"决定任务分派","n_zh":"按需转交销售、采购或生产智能体","l":"ai"},{"s":"Agents report back","n":"Each agent returns its results to the supervisor","s_zh":"智能体回报","n_zh":"各智能体向主管返回结果","l":"ai"},{"s":"Consolidate the report","n":"Reports in chat and saves results to the Deliverables Center","s_zh":"汇总报告","n_zh":"在对话中汇报，结果存入交付中心","l":"ai"}],"price":4750,"tbc":true},{"id":"ana-document-query","d":"analytics","en":"Queryable Document Store","zh":"可关联查询的文档库","sum":"Files are classified and linked on arrival; one question returns the answer and linked records","desc":"Contracts, placements, invoices and payments arrive by email, scan and upload and sit in cloud storage. Finding anything means searching a file name, opening the file, then hunting for the related files yourself. How the documents relate lives only in someone's head.","sum_zh":"文件到达即自动分类并建立关联；一个问题即可返回答案及所有关联记录","desc_zh":"合同、派遣单、发票和付款凭证通过邮件、扫描和上传进入，分散存放在云端。查找资料要先搜文件名、打开文件，再自己去找相关文件。文件之间的关联只存在于个别人的记忆中。","flow":[{"s":"Documents arrive","n":"Email, scans, uploads","s_zh":"文件到达","n_zh":"邮件、扫描件、上传","l":"user"},{"s":"Read & classify","n":"Type, client, contract, period","s_zh":"识别分类","n_zh":"类型、客户、合同、期间","l":"ai"},{"s":"Store","n":"In the client's own cloud tenancy","s_zh":"存储归档","n_zh":"存于客户自有云租户","l":"erp"},{"s":"Index & link","n":"Contract, placement, invoice, payment","s_zh":"索引关联","n_zh":"合同、派遣、发票、付款","l":"ai"},{"s":"Ask a question","n":"In plain words","s_zh":"提出问题","n_zh":"用日常语言提问","l":"user"},{"s":"Query via API","n":"Uses the index, not filenames","s_zh":"API查询","n_zh":"基于索引，而非文件名","l":"ai"},{"s":"Get the answer","n":"Plus every record it links to","s_zh":"获取答案","n_zh":"附带所有关联记录","l":"user"}],"price":null},{"id":"ana-store-peak-heatmap","d":"analytics","en":"Store Peak-Hour Heatmap","zh":"门店高峰时段热力图","sum":"One question returns an hour-by-weekday heatmap per store with the peak slot and customer count","desc":"Store managers want to know when each store is busiest and how many customers come in. Sales invoices only carry the checkout time, not the time a customer actually occupied the bay, so invoices have to be compiled and converted store by store and day by day to find the peak. Phase 1 is read-only and treats every service as 30 minutes.","sum_zh":"一句话生成各门店按小时×星期的热力图，标出高峰时段及客流量","desc_zh":"店长想知道各门店何时最忙、客流有多少。销售发票只记录结账时间，而非顾客实际占用工位的时间，因此需按门店、按天逐一汇总并换算发票才能找出高峰。第一阶段为只读，每项服务按30分钟计算。","flow":[{"s":"Ask for peak hours","n":"All stores or one store","s_zh":"查询高峰时段","n_zh":"全部门店或单个门店","l":"user"},{"s":"Read invoices","n":"Checkout timestamp per invoice","s_zh":"读取发票","n_zh":"每张发票的结账时间","l":"erp"},{"s":"Infer busy window","n":"30 minutes before checkout","s_zh":"推算繁忙时段","n_zh":"结账前30分钟","l":"ai"},{"s":"Hour × day grid","n":"Customers and value per cell","s_zh":"小时×星期网格","n_zh":"每格客流与金额","l":"ai"},{"s":"Build heatmap","n":"Busiest slot, written up as a reply","s_zh":"生成热力图","n_zh":"最忙时段，以回复呈现","l":"ai"},{"s":"Receive answer","n":"Peak slot, customer count, heatmap","s_zh":"接收答案","n_zh":"高峰时段、客流量、热力图","l":"user"},{"s":"Time by service","n":"Tyre change, alignment each timed","s_zh":"按服务计时","n_zh":"换胎、定位各自计时","l":"ai"}],"price":null},{"id":"fin-contract-gross-profit","d":"finance","en":"Contract Rate to Consultant GP","zh":"合同费率到顾问毛利","sum":"Reads contract rates, computes GP per placement, splits by rule and rolls up to company","desc":"Staff are placed with clients on different rates, and the rate sits in the contract. Each month gross profit is recalculated in a spreadsheet, split across departments such as BD, AM and DY, and credited to consultants. Credit shares are disputed, headline numbers don't tie back to entries, and teams only see where they stand at month-end.","sum_zh":"读取合同费率，计算每个派遣毛利，按规则分摊并逐级汇总至公司","desc_zh":"员工以不同费率派驻客户，费率写在合同中。每月要在电子表格中重算毛利，分摊到BD、AM、DY等部门，并计入顾问业绩。业绩分成常有争议，汇总数字无法追溯到明细，团队要到月底才知道自己的业绩。","flow":[{"s":"Provide contract","n":"Client terms and rates","s_zh":"提供合同","n_zh":"客户条款与费率","l":"user"},{"s":"Read contract terms","n":"Client, placement, charge and pay rates","s_zh":"读取合同条款","n_zh":"客户、派遣、收费与薪资费率","l":"ai"},{"s":"GP per placement","n":"Formula runs off the contract","s_zh":"计算派遣毛利","n_zh":"按合同自动套用公式","l":"ai"},{"s":"Split by rule","n":"BD, AM, DY, even or by percentage","s_zh":"按规则分摊","n_zh":"BD、AM、DY，均分或按比例","l":"ai"},{"s":"Roll up","n":"Consultant, team, department, company","s_zh":"逐级汇总","n_zh":"顾问、团队、部门、公司","l":"ai"},{"s":"View GP report","n":"Filter by period, drill to entries","s_zh":"查看毛利报表","n_zh":"按期间筛选，下钻至明细","l":"user"}],"price":null},{"id":"fin-p2p-vendor-invoice","d":"finance","en":"Vendor Invoice to Payment File","zh":"供应商发票到付款文件","sum":"Vendor invoices read and posted; approve by reply; payment voucher and bank file follow","desc":"Vendor invoices arrive by email. Someone keys them into the system, chases an approver, then prepares the payment voucher and the bank payment file. Work is retyped, waited on and chased between steps, so most of the time is lost in the handoffs rather than inside any one step.","sum_zh":"自动识别并录入供应商发票；回复即可审批；随后生成付款单和银行文件","desc_zh":"供应商发票通过邮件发来。有人手工录入系统，再催审批人审批，然后编制付款单和银行付款文件。工作在各环节之间被反复录入、等待和催办，大部分时间耗费在交接上，而非某个环节本身。","flow":[{"s":"Invoice arrives","n":"Emailed by the vendor","s_zh":"收到发票","n_zh":"供应商邮件发送","l":"user"},{"s":"Read invoice","n":"OCR vendor, amount and lines","s_zh":"识别发票","n_zh":"OCR识别供应商、金额与明细","l":"ai"},{"s":"Post to ERP","n":"AP entry created","s_zh":"录入ERP","n_zh":"生成应付记录","l":"erp"},{"s":"Approve by reply","n":"Approver replies to the alert","s_zh":"回复审批","n_zh":"审批人回复提醒即可","l":"user"},{"s":"Payment voucher","n":"","s_zh":"付款单","n_zh":"","l":"erp"},{"s":"Bank payment file","n":"In the bank's file format","s_zh":"银行付款文件","n_zh":"符合银行文件格式","l":"ai"}],"price":null},{"id":"fin-soa-project-email","d":"finance","en":"Project-Based SOA Check & Email","zh":"按项目核对对账单并发邮件","sum":"Auto-check AR statements per project and send emails, replacing manual lookup and send","desc":"AR accountants check each customer's AR statement (SOA) project by project. The system has no per-project filter, and custom dev could not meet the go-live deadline. Staff select and search each project one by one, and the dropdown lists every project, not just the customer's own. After checking, they still reopen each project to send the email — manual and slow.","sum_zh":"按项目自动核对应收对账单并发送邮件，取代手工查找与发送","desc_zh":"应收会计需逐个项目核对客户的应收对账单（SOA）。系统没有按项目筛选的功能，定制开发又赶不上上线时间。员工只能逐个选择和搜索项目，而下拉列表会列出所有项目，而非仅该客户的项目。核对后还要重新打开每个项目发送邮件，费时费力。","flow":[{"s":"Finance picks customer","n":"Customer name or code","s_zh":"财务选择客户","n_zh":"客户名称或编码","l":"user"},{"s":"Filter projects","n":"Only that customer's projects","s_zh":"筛选项目","n_zh":"仅该客户的项目","l":"ai"},{"s":"Read statements","n":"AR balance and lines per project","s_zh":"读取对账单","n_zh":"各项目应收余额与明细","l":"erp"},{"s":"Check balances","n":"Flags overdue or unusual projects","s_zh":"核对余额","n_zh":"标出逾期或异常项目","l":"ai"},{"s":"Draft emails","n":"Statement details per project","s_zh":"起草邮件","n_zh":"各项目对账明细","l":"ai"},{"s":"Send emails","n":"Per customer and per project","s_zh":"发送邮件","n_zh":"按客户、按项目发送","l":"ai"}],"price":null},{"id":"fin-travel-expense-claim","d":"finance","en":"Travel Estimate & Expense Claim","zh":"出差费用预估与报销","sum":"Auto-estimate costs; AI organizes and submits claims — staff just review","desc":"Employees manually fill in trip details and estimate costs by researching data themselves. Expense claims after the trip involve multiple currencies — staff look up rates on the finance team's site, convert each receipt to the functional currency, and write remarks in the required format for every receipt, which is slow when there are many receipts.","sum_zh":"自动预估差旅费用；AI整理并提交报销，员工只需确认","desc_zh":"员工需手工填写出差信息，并自行查找资料估算费用。出差后的报销涉及多种币种：员工要在财务团队网站上查汇率，将每张票据换算为本位币，并按规定格式为每张票据填写备注，票据一多就非常耗时。","flow":[{"s":"Request a trip","n":"Destination and dates","s_zh":"申请出差","n_zh":"目的地与日期","l":"user"},{"s":"Pre-fill & estimate","n":"Looks up the data, estimates trip cost","s_zh":"预填与估算","n_zh":"查找资料，估算差旅费用","l":"ai"},{"s":"Travel, keep receipts","n":"Receipts, often in several currencies","s_zh":"出差留存票据","n_zh":"票据常涉及多种币种","l":"user"},{"s":"Organize the claim","n":"Finance's FX rates; remarks in the required format","s_zh":"整理报销","n_zh":"按财务汇率；备注符合格式","l":"ai"},{"s":"Traveler reviews","n":"Confirms what was prepared","s_zh":"出差人确认","n_zh":"核对已准备的内容","l":"user"},{"s":"Submit claim","n":"Created directly once confirmed","s_zh":"提交报销","n_zh":"确认后直接生成","l":"erp"}],"price":null},{"id":"sales-cost-estimate-quotation","d":"sales","en":"Multi-factory Costing & Quoting","zh":"多工厂成本测算与报价建议","sum":"Enter an order to compare each factory's total cost and get a quote range from past margins","desc":"When a multi-factory manufacturer receives a new order, the sales manager has to choose the factory and set a price. Today that means collecting BOM, routing and rate data from each factory, adding logistics cost by hand and checking past order margins before quoting: slow, and cost items get missed.","sum_zh":"输入订单即可对比各工厂总成本，并依据历史毛利给出报价区间","desc_zh":"多工厂制造企业接到新订单时，销售经理需要选定工厂并确定价格。目前要收集各工厂的BOM、工艺路线和费率数据，手工加上物流成本，再参考历史订单毛利才能报价，速度慢且容易漏算成本项。","flow":[{"s":"Sales manager asks","n":"Enters the order number and asks to compare factories","s_zh":"销售经理提问","n_zh":"输入订单号，要求对比各工厂","l":"user"},{"s":"Read BOM and rates","n":"Product BOM, routing and logistics rates","s_zh":"读取BOM与费率","n_zh":"产品BOM、工艺路线及物流费率","l":"erp"},{"s":"Cost each factory","n":"Sums material, labour and overhead, adds freight by distance","s_zh":"各工厂成本测算","n_zh":"汇总材料、人工和制造费用，按距离加运费","l":"ai"},{"s":"Compare total cost","n":"Finds the factory with the lowest total cost","s_zh":"对比总成本","n_zh":"找出总成本最低的工厂","l":"ai"},{"s":"Suggest a quote","n":"Gives a price range based on past order margins","s_zh":"报价建议","n_zh":"依据历史订单毛利给出价格区间","l":"ai"},{"s":"Sales confirms quote","n":"Picks factory and price, weighing delivery time","s_zh":"销售确认报价","n_zh":"综合交期选定工厂与价格","l":"user"}],"price":null},{"id":"sales-pdf-to-sales-order","d":"sales","en":"PDF Order to Sales Order","zh":"PDF订单自动生成销售订单","sum":"Customer PDF orders are read, the amounts checked, and the sales order created directly","desc":"Customers email purchase orders as PDFs. A sales assistant opens each file, keys the customer, delivery date, items, quantities and prices into the system, and checks the totals by hand. At volume this takes time, and totals are easy to get wrong.","sum_zh":"自动读取客户PDF订单，核对金额，直接生成销售订单","desc_zh":"客户通过邮件以PDF发送采购订单。销售助理需逐个打开文件，将客户、交货日期、品项、数量和价格录入系统，再手工核对合计。订单量大时耗时多，合计也容易出错。","flow":[{"s":"Customer sends a PDF","n":"Email attachment or upload","s_zh":"客户发送PDF","n_zh":"邮件附件或上传","l":"user"},{"s":"Extract the order","n":"Customer, date, items, quantity, price","s_zh":"提取订单","n_zh":"客户、日期、品项、数量、价格","l":"ai"},{"s":"Check amounts","n":"Line amounts and totals reconciled","s_zh":"核对金额","n_zh":"行金额与合计核对一致","l":"ai"},{"s":"Create sales order","n":"No manual confirmation step","s_zh":"生成销售订单","n_zh":"无需人工确认","l":"erp"},{"s":"Get the result","n":"Order number and line summary","s_zh":"获取结果","n_zh":"订单号及明细摘要","l":"user"}],"price":5225},{"id":"sales-plate-lookup","d":"sales","en":"Plate Lookup to Customer History","zh":"车牌查询客户完整历史","sum":"Enter a plate number and get the customer's full history in a fixed dashboard layout","desc":"Front-desk staff often know only the car plate. Plates are recorded only on retail orders, not in the customer master, and one customer can own several cars. Finding a car's owner and history means searching retail orders, then pulling that customer's sales, retail and service records together by name.","sum_zh":"输入车牌号，即可在固定版式的看板中查看客户完整历史","desc_zh":"前台人员往往只知道车牌号。车牌只记录在零售订单上，并不在客户主数据中，而且一位客户可能拥有多辆车。要查出车主及其历史，需先搜索零售订单，再按客户名称汇总其销售、零售和服务记录。","flow":[{"s":"Weekly order scan","n":"In background, plate and customer name","s_zh":"每周扫描订单","n_zh":"后台提取车牌与客户名","l":"ai"},{"s":"Update plate map","n":"Plate to customer, no full scans","s_zh":"更新车牌映射","n_zh":"车牌对应客户，无需全量扫描","l":"ai"},{"s":"Enter a plate","n":"Any spacing or case","s_zh":"输入车牌","n_zh":"空格、大小写均可","l":"user"},{"s":"Plate to customer","n":"Incremental scan if missing; else say so","s_zh":"车牌匹配客户","n_zh":"缺失时增量扫描，否则如实告知","l":"ai"},{"s":"Fetch all records","n":"Sales, retail and service","s_zh":"获取全部记录","n_zh":"销售、零售和服务","l":"erp"},{"s":"Fill fixed layout","n":"Client-defined, same every time","s_zh":"填入固定版式","n_zh":"客户自定义，每次一致","l":"ai"},{"s":"View history","n":"Visits, spend, sizes, stores","s_zh":"查看历史","n_zh":"到店次数、消费、轮胎规格、门店","l":"user"}],"price":null},{"id":"sc-batch-doc-capture","d":"supply-chain","en":"Batch Photo Document Capture","zh":"批量单据拍照识别入账","sum":"Photos of handwritten retail orders and GRNs become ERP documents after one confirmation","desc":"Many store retail orders and supplier goods receipts (GRNs) are handwritten and have to be keyed into the system one by one, as retail orders and purchase receipts respectively. The two types often arrive mixed and must be told apart first, and when one sheet can't be read or fails to post, staff need to know which one.","sum_zh":"手写零售单和收货单拍照后，一次确认即可生成ERP单据","desc_zh":"许多门店零售单和供应商收货单（GRN）为手写，需分别作为零售订单和采购入库逐张录入系统。两类单据常混在一起，必须先区分；某张单据无法识别或入账失败时，员工还需要知道是哪一张。","flow":[{"s":"Upload photos","n":"Retail orders and GRNs, mixed","s_zh":"上传照片","n_zh":"零售单与GRN混合","l":"user"},{"s":"Split per photo","n":"One photo, one document","s_zh":"逐张拆分","n_zh":"一张照片对应一张单据","l":"ai"},{"s":"Classify each","n":"Retail order or GRN","s_zh":"逐张分类","n_zh":"零售单或GRN","l":"ai"},{"s":"Extract fields","n":"Items, qty, price, plate, supplier","s_zh":"提取字段","n_zh":"品项、数量、价格、车牌、供应商","l":"ai"},{"s":"Validate each","n":"Unreadable ones dropped alone","s_zh":"逐张校验","n_zh":"无法识别的单独剔除","l":"ai"},{"s":"Confirm once","n":"One table covering all sheets","s_zh":"一次确认","n_zh":"一张表涵盖全部单据","l":"user"},{"s":"Post by type","n":"Retail order / purchase receipt","s_zh":"按类型入账","n_zh":"零售订单／采购入库","l":"erp"},{"s":"Get results","n":"Document numbers; failures itemised","s_zh":"获取结果","n_zh":"单据号；失败逐项列明","l":"user"}],"price":null},{"id":"sc-daily-fulfilment-queue","d":"supply-chain","en":"Daily Fulfilment Queue","zh":"每日发货优先队列","sum":"Each morning, confirmed orders are checked against stock and ranked, with exceptions flagged","desc":"Every day the warehouse and shipping team decide which confirmed sales orders can ship, which go first and which are held by missing stock. Today each order is checked against stock by hand. Incoming shipments only show as \"processing\" with no date, so it is hard to say when a held order can go out.","sum_zh":"每天早上，已确认订单自动比对库存并排序，同时标出异常","desc_zh":"仓库和发货团队每天都要决定哪些已确认的销售订单可以发货、哪些优先、哪些因缺货而暂缓。目前每张订单都要手工核对库存。在途货物只显示“处理中”，没有日期，因此很难判断暂缓的订单何时能发出。","flow":[{"s":"Morning run","n":"","s_zh":"早间运行","n_zh":"","l":"ai"},{"s":"Read orders & stock","n":"Confirmed SOs, on hand, incoming POs","s_zh":"读取订单与库存","n_zh":"已确认SO、现存量、在途PO","l":"erp"},{"s":"Check each line","n":"Ready / partial / short","s_zh":"逐行检查","n_zh":"齐套／部分／缺货","l":"ai"},{"s":"Prioritise","n":"Promised date, customer, order age","s_zh":"确定优先级","n_zh":"承诺日期、客户、订单账龄","l":"ai"},{"s":"Pick and ship","n":"Works from the daily queue","s_zh":"拣货发货","n_zh":"按每日队列执行","l":"user"},{"s":"Chase exceptions","n":"Short SKU and expected arrival","s_zh":"跟进异常","n_zh":"缺货SKU及预计到货","l":"user"}],"price":3800},{"id":"sc-po-from-photo","d":"supply-chain","en":"PO from Photo","zh":"拍照生成采购订单","sum":"A photo of a supplier quote or handwritten order becomes a PO after one preview check","desc":"Buyers receive supplier quotations, order forms and handwritten orders on paper or as photos. Each line is keyed into the system by hand, and every supplier and material code has to be looked up. Tilted photos and unclear handwriting cause errors in prices and quantities that only surface at reconciliation.","sum_zh":"供应商报价单或手写订单拍照后，预览确认一次即可生成采购订单","desc_zh":"采购人员收到的供应商报价单、订货单和手写订单多为纸质或照片。每一行都要手工录入系统，每个供应商和物料编码都要逐一查找。照片歪斜和字迹潦草会导致价格和数量出错，直到对账时才发现。","flow":[{"s":"Upload a photo","n":"Quote, order form or handwritten order","s_zh":"上传照片","n_zh":"报价单、订货单或手写订单","l":"user"},{"s":"Read the photo","n":"Straightens it and reads each line","s_zh":"识别照片","n_zh":"自动校正并逐行识别","l":"ai"},{"s":"Match codes","n":"Supplier and materials matched, never guessed","s_zh":"匹配编码","n_zh":"匹配供应商与物料，绝不猜测","l":"ai"},{"s":"Check the preview","n":"Supplier, materials, quantity and price","s_zh":"核对预览","n_zh":"供应商、物料、数量和价格","l":"user"},{"s":"Create the PO","n":"Written only after confirmation","s_zh":"生成采购订单","n_zh":"确认后才写入","l":"erp"}],"price":null}];
+
+const TEXT = {
+  title: ["YonWork AI Estimator", "YonWork AI 报价估算"],
+  vEst: ["Estimator", "估算器"], vFaq: ["FAQ", "常见问题"], vTerms: ["Terms", "条款"],
+  faqTitle: ["Frequently asked questions", "常见问题"],
+  faqSub: ["Short answers to what clients ask most. The Terms and Conditions are the binding version.", "客户最常问的问题简答。具有约束力的内容以条款为准。"],
+  faqSearch: ["Search questions", "搜索问题"], faqNone: ["No questions match your search.", "没有匹配的问题。"],
+  seeTerms: ["Terms and FAQ", "条款与常见问题"],
+  subtitle: ["Yonyou Singapore · AI quotation · all prices in SGD, excluding GST", "用友新加坡 · AI 报价 · 所有价格以新元计，不含消费税"],
+  reset: ["Clear", "清空"], export: ["Export Excel", "导出 Excel"],
+  erp: ["ERP platform", "ERP 平台"], erpSub: ["NCC adds Section 4 · Agent", "选择 NCC 将增加第 4 部分 · 智能体"],
+  s1: ["User licence", "用户许可"], s2: ["AI model", "AI 模型"], s3: ["Workflow", "工作流"], sAg: ["Agent", "智能体"], sMt: ["Maintenance", "运维"],
+  yearly: ["Yearly", "每年"], onetime: ["One-time", "一次性"], required: ["Required", "必选"],
+  local: ["Local AI", "本地 AI"], localSub: ["Enterprise AI Box", "企业级 AI 一体机"],
+  cloud: ["Cloud AI", "云端 AI"], cloudSub: ["AI Units (AU)", "AI 点数（AU）"],
+  payg: ["Pay as you go", "按需付费"],
+  boxHint: ["We suggest one AI Box for every 5 users.", "建议每 5 位用户配置一台 AI 一体机。"],
+  chooseBelow: ["No workflows yet. Tick them in the catalogue below.", "尚未选择工作流。请在下方目录中勾选。"],
+  agentSub: ["NCC · pick at least 1", "NCC · 至少选择 1 个"],
+  agentNeed: ["Select at least 1 agent for NCC.", "NCC 需至少选择 1 个智能体。"],
+  exportBlocked: ["Select at least 1 agent in Section 4 before exporting.", "导出前请在第 4 部分至少选择 1 个智能体。"],
+  perYear: ["/ year", "/ 年"],
+  inclMaint: ["Include maintenance", "包含运维服务"],
+  catalogue: ["Workflow catalogue", "工作流目录"],
+  catalogueNote: ["Tick a workflow to add it to the quotation. Click a card for what it does, how it works and what it costs.", "勾选工作流即加入报价。点击卡片查看功能、运作流程和费用。"],
+  all: ["All", "全部"], selected: ["Selected", "已选"], details: ["Details", "详情"],
+  add: ["Add to quotation", "加入报价"], remove: ["Remove from quotation", "从报价中移除"], close: ["Close", "关闭"],
+  first: ["Total first-year investment", "首年总投资"],
+  recurring: ["Recurring", "经常性费用"],
+  oneTime: ["One-time", "一次性费用"], three: ["3-year investment", "3 年总投资"], threeSub: ["at current prices", "按现行价格"],
+  breakdown: ["Breakdown", "费用明细"], optedOut: ["Opted out", "不含"],
+  client: ["Client details", "客户信息"], clientNote: ["Goes on the Excel quotation.", "会写入 Excel 报价单，仅保存在本浏览器中。"],
+  company: ["Company name", "公司名称"], contact: ["Contact person", "联系人"], email: ["Email", "电子邮箱"], manager: ["Sales Manager", "销售经理"],
+  whatItDoes: ["What it does", "功能说明"], howItWorks: ["How it works", "运作流程"],
+  feeKey: ["Workflow fee · one-time", "工作流费用 · 一次性"],
+  feeNote: ["Design, build, testing and handover of this workflow.", "包括该工作流的设计、开发、测试与交付。"],
+  feeTbcNote: ["Indicative: the client decides the deliverables (content, layout, metrics), so the price is confirmed after scoping and may change.", "参考价：交付内容（内容、版式、指标）由客户决定，价格在确认范围后确定，可能会有调整。"],
+  feeNoneNote: ["No price yet: quoted after scoping.", "尚未定价：确认范围后报价。"],
+  maintKey: ["Maintenance · yearly, optional", "运维 · 每年，可选"],
+  maintNote: ["10% of this workflow's fee per year once it is live. The client can opt out.", "工作流上线后每年按该工作流费用的 10% 计费，客户可选择不含。"],
+  casePage: ["View full case page ↗", "查看完整案例页面 ↗"],
+  priceTbc: ["PRICE TBC", "价格待定"], tbc: ["TBC", "待定"],
+};
+const DOMAINS = [["finance", "Finance", "财务"], ["supply-chain", "Supply Chain", "供应链"], ["sales", "Sales", "销售"], ["analytics", "Analytics", "分析"]];
+const LANES = { ai: ["AI", "AI", "#E3202C"], erp: ["ERP", "ERP", "#D68A00"], user: ["You", "您", "#0B8F80"] };
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("yw-ai-" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("yw-ai-" + k, JSON.stringify(v)); } catch {} },
+};
+const S = {
+  lang: store.get("lang", "en"), users: store.get("users", 0), boxes: store.get("boxes", 0),
+  aiMode: store.get("aiMode", "local"), packs: store.get("packs", 0),
+  erp: ERPS.some(e => e[0] === store.get("erp", "ys")) ? store.get("erp", "ys") : "ys",
+  selected: new Set(store.get("selected", []).filter(id => WORKFLOWS.some(w => w.id === id))),
+  agents: new Set(store.get("agents", []).filter(id => AGENTS.some(a => a.id === id))),
+  maint: store.get("maint", true), filter: "all", open: null, faqQ: "",
+  client: store.get("client", { company: "", contact: "", email: "", manager: "" }),
+};
+const zh = () => S.lang === "zh";
+const t = k => TEXT[k][zh() ? 1 : 0];
+const L = (en, cn) => zh() ? (cn || en) : en;
+const r2 = n => Math.round(n * 100) / 100;
+const sgd = n => "S$" + Number(n).toLocaleString("en-SG", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = id => document.getElementById(id);
+const save = () => { store.set("users", S.users); store.set("boxes", S.boxes); store.set("aiMode", S.aiMode); store.set("packs", S.packs); store.set("erp", S.erp); store.set("selected", [...S.selected]); store.set("agents", [...S.agents]); store.set("maint", S.maint); store.set("client", S.client); store.set("lang", S.lang); };
+const erpName = () => { const e = ERPS.find(e => e[0] === S.erp); return `${e[2]} (${e[1]})`; };
+
+const title = w => L(w.en, w.zh), alt = w => zh() ? w.en : w.zh;
+const domainName = d => { const x = DOMAINS.find(x => x[0] === d); return x ? L(x[1], x[2]) : d; };
+function priceHTML(w) {
+  if (w.price == null) return `<span class="tag tbc">${t("priceTbc")}</span>`;
+  return w.tbc ? `<span class="num">~${sgd(w.price)}</span><span class="tag tbc">${t("tbc")}</span>` : `<span class="num">${sgd(w.price)}</span>`;
+}
+
+function totals() {
+  const ncc = S.erp === "ncc";
+  const chosen = WORKFLOWS.filter(w => S.selected.has(w.id));
+  const agents = ncc ? AGENTS.filter(a => S.agents.has(a.id)) : [];
+  const licence = S.users * CONFIG.licence, hardware = S.aiMode === "cloud" ? S.packs * CONFIG.auPack : S.boxes * CONFIG.box;
+  const workflow = chosen.reduce((a, w) => a + (w.price || 0), 0);
+  const agent = agents.reduce((a, x) => a + x.price, 0);
+  const maintenance = S.maint ? r2(workflow * CONFIG.maintRate) : 0;
+  const recurring = r2(licence + agent + maintenance), oneTime = hardware + workflow;
+  const tbc = chosen.filter(w => w.tbc && w.price != null), none = chosen.filter(w => w.price == null);
+  return { ncc, chosen, agents, licence, hardware, workflow, agent, maintenance, recurring, oneTime, first: r2(recurring + oneTime),
+    three: r2(recurring * CONFIG.years + oneTime), tbc, tbcSum: tbc.reduce((a, w) => a + w.price, 0), none, needAgent: ncc && !agents.length };
+}
+
+function notesHTML(T) {
+  let h = "";
+  if (T.none.length) h += `<div class="warn">⚠️ <span>${T.none.length === 1
+      ? L("1 selected workflow has no price yet, so Section 3 does not include it.", "已选的 1 个工作流尚未定价，第 3 部分未计入其费用。")
+      : L(`${T.none.length} selected workflows have no price yet, so Section 3 does not include them.`, `已选的 ${T.none.length} 个工作流尚未定价，第 3 部分未计入其费用。`)}</span></div>`;
+  if (T.tbc.length) h += `<div class="info">ℹ️ <span>${L(
+      `~ marks an indicative price. ${T.tbc.length === 1 ? "1 workflow" : T.tbc.length + " workflows"} (~${sgd(T.tbcSum)}) ${T.tbc.length === 1 ? "depends" : "depend"} on deliverables the client decides, such as report content, layout and metrics. The final price is confirmed after scoping and may change.`,
+      `~ 表示参考价。其中 ${T.tbc.length} 个工作流（约 ${sgd(T.tbcSum)}）的交付内容由客户决定，如报表内容、版式和指标。最终价格在确认范围后确定，可能会有调整。`)}</span></div>`;
+  return h;
+}
+
+function sheetHTML(w) {
+  const on = S.selected.has(w.id);
+  const steps = w.flow.map((s, i) => `<li><span class="n" style="background:${LANES[s.l][2]}">${i + 1}</span><span><b>${esc(L(s.s, s.s_zh))}</b>${s.n ? `<em>${esc(L(s.n, s.n_zh))}</em>` : ""}</span></li>`).join("");
+  const feeNote = w.price == null ? t("feeNoneNote") : w.tbc ? t("feeTbcNote") : t("feeNote");
+  const fee = w.price == null ? L("Price TBC", "价格待定") : (w.tbc ? "~" : "") + sgd(w.price);
+  const mt = w.price == null ? L("10% of the fee", "费用的 10%") : (w.tbc ? "~" : "") + sgd(r2(w.price * CONFIG.maintRate));
+  return `<div class="sh-head"><div style="flex:1;min-width:0"><span class="dom">${domainName(w.d)}</span><h3 id="shTitle">${esc(title(w))}</h3><div class="caption">${esc(alt(w))}</div></div>
+      <button class="xbtn" data-close aria-label="${t("close")}">✕</button></div>
+    <div class="sh-body">
+      <div class="h3" style="margin-top:4px">${t("whatItDoes")}</div><p class="sum">${esc(L(w.sum, w.sum_zh))}</p><p>${esc(L(w.desc, w.desc_zh))}</p>
+      <div class="h3">${t("howItWorks")}</div>
+      <div class="legend">${Object.values(LANES).map(l => `<span style="--c:${l[2]}">${L(l[0], l[1])}</span>`).join("")}</div>
+      <ol class="steps">${steps}</ol>
+      <div class="costs"><div><div class="k">${t("feeKey")}<b class="num">${fee}</b></div><div class="note">${feeNote}</div></div>
+        <div><div class="k">${t("maintKey")}<b class="num">${mt}</b></div><div class="note">${t("maintNote")}</div></div></div>
+      ${w.case === false ? "" : `<a class="link" href="${CONFIG.caseSite + w.id}" target="_blank" rel="noopener">${t("casePage")}</a>`}
+    </div>
+    <div class="sh-foot"><span class="price">${priceHTML(w)}</span><button class="btn ${on ? "" : "primary"}" data-toggle="${w.id}">${on ? "✓ " + t("remove") : t("add")}</button></div>`;
+}
+
+let sheetShown = null, sheetTimer;
+function syncSheet() {
+  const scrim = $("sheet"), box = $("sheetBox");
+  const w = S.open && WORKFLOWS.find(x => x.id === S.open);
+  clearTimeout(sheetTimer);
+  if (w) {
+    const keep = sheetShown === w.id ? box.scrollTop : 0;
+    box.innerHTML = sheetHTML(w); box.scrollTop = keep;
+    if (sheetShown !== w.id) {
+      scrim.hidden = false; document.body.style.overflow = "hidden";
+      requestAnimationFrame(() => requestAnimationFrame(() => scrim.classList.add("show")));
+      const x = box.querySelector(".xbtn"); x && x.focus({ preventScroll: true });
+    }
+    sheetShown = w.id;
+  } else if (sheetShown) {
+    scrim.classList.remove("show"); document.body.style.overflow = "";
+    sheetShown = null;
+    sheetTimer = setTimeout(() => { scrim.hidden = true; }, 260);
+  }
+}
+
+const VIEWS = ["estimator", "faq", "terms"];
+const viewNow = () => { const h = location.hash.slice(1); return VIEWS.includes(h) ? h : "estimator"; };
+
+function render() {
+  document.documentElement.lang = zh() ? "zh-Hans" : "en";
+  const view = viewNow();
+  document.body.className = "v-" + view;
+  $("viewEst").hidden = view !== "estimator"; $("viewFaq").hidden = view !== "faq"; $("viewTerms").hidden = view !== "terms";
+  document.querySelectorAll("[data-view]").forEach(b => { b.classList.toggle("on", b.dataset.view === view); b.setAttribute("aria-selected", b.dataset.view === view); });
+  $("reset").hidden = $("xlsxBtn").hidden = view !== "estimator";
+  document.querySelectorAll("[data-t]").forEach(el => el.textContent = t(el.dataset.t));
+  document.querySelectorAll("[data-lang]").forEach(b => b.classList.toggle("on", b.dataset.lang === S.lang));
+  ["company", "contact", "email", "manager"].forEach(k => $(k).placeholder = t(k));
+  const T = totals(), ap = T.tbc.length ? "~" : "";
+
+  $("erp").innerHTML = ERPS.map(([k, code, name]) => `<button role="radio" aria-checked="${S.erp === k}" class="${S.erp === k ? "on" : ""}" data-erp="${k}"><b>${code}</b><span>${name}</span></button>`).join("");
+
+  $("aLic").textContent = sgd(T.licence);
+  $("licNote").textContent = L(`× ${sgd(CONFIG.licence)} per user per year`, `× 每用户每年 ${sgd(CONFIG.licence)}`);
+  $("aHw").textContent = sgd(T.hardware);
+  $("hwNote").textContent = L(`× ${sgd(CONFIG.box)} per Enterprise AI Box`, `× 每台企业级 AI 一体机 ${sgd(CONFIG.box)}`);
+  $("auNote").textContent = L(`Starting top-up: packs × ${sgd(CONFIG.auPack)} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU`, `首次充值：包数 × 每 ${CONFIG.auPerPack.toLocaleString("en-SG")} AU ${sgd(CONFIG.auPack)}`);
+  $("aWf").textContent = ap + sgd(T.workflow);
+  $("aMt").textContent = (S.maint ? ap : "") + sgd(T.maintenance);
+  if (document.activeElement !== $("users")) $("users").value = S.users;
+  if (document.activeElement !== $("boxes")) $("boxes").value = S.boxes;
+  if (document.activeElement !== $("packs")) $("packs").value = S.packs;
+  document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === S.aiMode));
+  $("localBox").hidden = S.aiMode !== "local"; $("cloudBox").hidden = S.aiMode !== "cloud";
+  $("auTotal").textContent = L(`${(S.packs * CONFIG.auPerPack).toLocaleString("en-SG")} AU to start. Pay as you go: the client tops up anytime at ${sgd(CONFIG.auPack)} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU.`, `首次 ${(S.packs * CONFIG.auPerPack).toLocaleString("en-SG")} AU。按需付费：客户可随时充值，每 ${CONFIG.auPerPack.toLocaleString("en-SG")} AU ${sgd(CONFIG.auPack)}。`);
+  const tag2 = $("tag2"); tag2.className = "tag " + (S.aiMode === "cloud" ? "payg" : "onetime"); tag2.textContent = t(S.aiMode === "cloud" ? "payg" : "onetime");
+
+  // 3 · Workflow
+  $("nSel").textContent = T.chosen.length ? L(`${T.chosen.length} selected`, `已选 ${T.chosen.length} 个`) : "";
+  $("chosen").innerHTML = T.chosen.map(w => `<div class="it"><button class="t" data-open="${w.id}"><b>${esc(title(w))}</b><span>${esc(alt(w))}</span></button>
+      <div class="price">${priceHTML(w)}</div><button class="x" data-toggle="${w.id}" aria-label="Remove">⊗</button></div>`).join("");
+  $("chosenEmpty").hidden = !!T.chosen.length;
+  $("wfNotes").innerHTML = notesHTML(T);
+
+  // 4 · Agent (NCC only)
+  $("secAgent").hidden = !T.ncc;
+  $("row45").classList.toggle("one", !T.ncc);
+  $("secAgent").classList.toggle("need", T.needAgent);
+  $("aAg").textContent = sgd(T.agent);
+  $("agents").innerHTML = AGENTS.map(a => { const on = S.agents.has(a.id); return `<button class="agent ${on ? "on" : ""}" data-agent="${a.id}" aria-pressed="${on}">
+      <span class="row"><span class="ck">${on ? "✓" : ""}</span><b>${esc(L(a.en, a.zh))}</b></span><span class="alt">${esc(zh() ? a.en : a.zh)}</span>
+      <span class="p num">${sgd(a.price)} <small>${t("perYear")}</small></span></button>`; }).join("");
+  $("agWarn").innerHTML = T.needAgent ? `<div class="err">⚠️ <span>${t("agentNeed")}</span></div>` : "";
+
+  // 4/5 · Maintenance
+  $("mtBadge").textContent = T.ncc ? 5 : 4;
+  $("maint").checked = S.maint;
+  $("mtNote").textContent = S.maint
+    ? L(`10% of the workflow charge (${ap}${sgd(T.workflow)}) per year. Optional support once workflows are live.`, `每年按工作流费用（${ap}${sgd(T.workflow)}）的 10% 计费。工作流上线后的可选支持服务。`)
+    : L("The client has opted out of maintenance.", "客户已选择不含运维服务。");
+
+  // Totals
+  $("tFirst").textContent = ap + sgd(T.first);
+  $("heroAlert").hidden = !T.needAgent;
+  $("recSub").textContent = (T.ncc ? "1 + 4 + 5" : "1 + 4") + L(" · yearly", " · 每年");
+  $("tRec").textContent = (S.maint ? ap : "") + sgd(T.recurring);
+  $("tOne").textContent = ap + sgd(T.oneTime);
+  $("tThree").textContent = ap + sgd(T.three);
+  $("barTotal").textContent = ap + sgd(T.first);
+  const paygNote = S.aiMode === "cloud" ? L(" Cloud AI is pay as you go: one-time includes the starting AU top-up only.", " 云端 AI 按需付费：一次性费用仅含首次 AU 充值。") : "";
+  $("fine").textContent = (T.tbc.length
+    ? L("All prices in SGD, excluding GST. ~ includes indicative workflow prices, confirmed after scoping.", "所有价格以新元计，不含消费税（GST）。~ 表示含工作流参考价，确认范围后定价。")
+    : L("All prices in SGD, excluding GST.", "所有价格以新元计，不含消费税（GST）。")) + paygNote;
+
+  const parts = [[1, "s1", "yearly", T.licence, "--c1"], [2, "s2", S.aiMode === "cloud" ? "payg" : "onetime", T.hardware, "--c2"], [3, "s3", "onetime", T.workflow, "--c3", ap]];
+  if (T.ncc) parts.push([4, "sAg", "yearly", T.agent, "--c4"]);
+  parts.push([T.ncc ? 5 : 4, "sMt", "yearly", T.maintenance, "--c5", ap, !S.maint]);
+  $("stack").innerHTML = T.first > 0 ? parts.filter(p => p[3] > 0).map(p => `<i style="flex-grow:${p[3]};background:var(${p[4]})" title="${p[0]} · ${esc(t(p[1]))}: ${sgd(p[3])} (${Math.round(p[3] / T.first * 100)}%)"></i>`).join("") : "";
+  $("stack").setAttribute("aria-label", L("Share of first-year total by section", "各部分占首年总额的比例"));
+  $("rows").innerHTML = parts.map(([n, k, cls, v, c, pre = "", off]) => `<div class="rowx"><span class="dot" style="background:var(${c})"></span>
+      <span class="nm">${n} · ${esc(t(k))}<small><span class="tag ${cls}">${t(cls)}</span>${T.first > 0 && v > 0 ? ` ${Math.round(v / T.first * 100)}% ${L("of first year", "占首年")}` : ""}</small></span>
+      <span class="v num">${off ? `<span class="off">${t("optedOut")}</span>` : pre + sgd(v)}</span></div>`).join("");
+  // The ~ caveat is already in the hero fine print and Section 3; only the unpriced warning repeats here.
+  $("totNotes").innerHTML = notesHTML({ ...T, tbc: [] });
+
+  // Catalogue
+  const chip = (key, label, n) => `<button class="chip ${S.filter === key ? "on" : ""}" data-filter="${key}">${label}<i>${n}</i></button>`;
+  $("chips").innerHTML = chip("all", t("all"), WORKFLOWS.length)
+    + DOMAINS.map(d => chip(d[0], domainName(d[0]), WORKFLOWS.filter(w => w.d === d[0]).length)).join("")
+    + chip("selected", t("selected"), S.selected.size);
+  const items = WORKFLOWS.filter(w => S.filter === "all" || (S.filter === "selected" ? S.selected.has(w.id) : w.d === S.filter));
+  $("list").innerHTML = items.map(w => { const on = S.selected.has(w.id); return `<div class="wf glass ${on ? "sel" : ""}">
+      <button class="check" data-toggle="${w.id}" aria-pressed="${on}" aria-label="${esc(w.en)}">${on ? "✓" : ""}</button>
+      <button class="open" data-open="${w.id}"><span class="t"><b>${esc(title(w))}</b><span class="alt">${esc(alt(w))}</span></span>
+        <span class="foot"><span class="dom">${domainName(w.d)}</span><span class="price">${priceHTML(w)}</span><span class="more">${t("details")} ›</span></span></button></div>`; }).join("");
+
+  syncSheet();
+  if (view !== "estimator") { renderDocs(view); spy(); }
+  save();
+}
+
+/* ---- Terms and FAQ ----
+   Default answers agreed 17 Nov 2026 (see "YonWork quotation: terms to decide").
+   Change a number here and the Terms, the FAQ and the Excel quotation all follow. */
+const TC = {
+  version: "1.0", effective: "17 November 2026",
+  care: 4000, careBuyDays: 30, careRepairDays: 10,
+  priceFixMonths: 12, priceNotice: 30, renewNotice: 60,
+  payDays: 30, suspendDays: 30, liabilityMonths: 12,
+  acceptDays: 10, warrantyDays: 30, deemedGoLiveDays: 30, pauseDays: 30, tbcTolerance: 15,
+  thirdPartyDays: 2, auValidMonths: 12, exportDays: 30, cureDays: 30, doaDays: 7, supportYears: 3,
+};
+
+function termsData() {
+  const pct = Math.round(CONFIG.maintRate * 100), rate = sgd(CONFIG.rate).replace("S$", "SGD ");
+  return [
+    { t: "Definitions and order of documents", c: [
+      `These terms apply to YonWork products and services quoted by Yonyou Network Technology (Singapore) Private Limited ("Yonyou" or "Party B") to a client ("the Client" or "Party A").`,
+      `"Workflow" means an AI automation that Yonyou builds for the Client on the YonWork platform. Technical documents may call it a "skill".`,
+      `"Agent" means an AI agent for NC Cloud (NCC), subscribed per year.`,
+      `"Go-live" means the date a Workflow or Agent is first used in production, or the deemed date under clause 9.4.`,
+      `"AI Box" means the Enterprise AI Box hardware that runs the AI model on the Client's premises. "AU" means the AI Units used by Cloud AI.`,
+      `If documents conflict, a signed contract prevails, then the quotation, then these terms.`,
+    ] },
+    { t: "Fees, invoicing and payment", c: [
+      `Prices are in Singapore dollars (SGD) and exclude GST, which is added where applicable.`,
+      `Yearly fees for licences, Agents and maintenance are invoiced in advance on contract signing. The licence term starts on signing. The first 12-month term of Agents and maintenance starts on Go-live.`,
+      `Where Workflows go live on different dates, maintenance starts at the first Go-live and later Workflows are pro-rated to the same anniversary.`,
+      `AI Box hardware and the starting AU top-up are invoiced in full on contract signing.`,
+      `Implementation fees are invoiced 50% on contract signing, 30% on UAT acceptance and 20% on Go-live.`,
+      `Invoices are due within ${TC.payDays} days of the invoice date.`,
+      `If an invoice is more than ${TC.suspendDays} days overdue, Yonyou may suspend licences, Workflows and Agents until it is paid.`,
+      `Withholding taxes and bank charges are borne by the Client, so that Yonyou receives the full invoiced amount.`,
+      `The agreement and its payment terms do not depend on the approval of any government grant, such as EDG or PSG. Yonyou provides the invoices and documents a grant claim requires.`,
+    ] },
+    { t: "Licences", c: [
+      `Each licence is for one named user and cannot be shared. A licence can be reassigned when a user leaves the Client.`,
+      `Users added during a term are charged pro rata to the renewal date.`,
+      `Reductions in users take effect at the next renewal. No refunds are given for unused licences during a term.`,
+    ] },
+    { t: "Term, renewal and prices", c: [
+      `The initial term is 12 months. It renews automatically for further 12-month terms unless either party gives written notice at least ${TC.renewNotice} days before renewal.`,
+      `Recurring prices are fixed for the first ${TC.priceFixMonths} months. After that, renewals are at Yonyou's list price then in force, notified at least ${TC.priceNotice} days before renewal.`,
+      `Multi-year totals shown by the estimator or in a quotation are estimates at current prices.`,
+    ] },
+    { t: "Maintenance and support", c: [
+      `Maintenance is optional and costs ${pct}% of the Workflow implementation fee per year. For indicative (TBC) prices, it is recalculated when the final price is confirmed.`,
+      `Maintenance covers: (a) fixing a delivered Workflow that stops working as accepted at UAT; (b) changes needed when a YonSuite, YonBIP or NCC upgrade affects a delivered Workflow; (c) re-testing and adjusting delivered Workflows when Yonyou or its model provider retires or replaces the AI model in use; (d) changes needed when a connected third-party service, such as a marketplace, bank or email provider, changes its format or login, up to ${TC.thirdPartyDays} man-days a year; (e) tuning when a new layout of an already supported document type is not read correctly; and (f) how-to questions raised by ticket.`,
+      `Maintenance does not cover the following, which Yonyou quotes separately at ${rate} per man-day: an AI model requested by the Client; new input sources, document types or fields; new features or reports; changes to the Client's organisation, processes, approval rules or master data; moving to another system or adding a channel; performance work due to higher volumes; data clean-up; errors caused by the Client's data; training; AI Box hardware; and Agents, which carry their own support under clause 10.`,
+      `Support runs Monday to Friday, 9:00 to 18:00 Singapore time, excluding Singapore public holidays, by email or ticket. Yonyou aims to respond to Critical issues (a Workflow stopped, or posting wrong data) within the same business day, Major issues (partly working) by the next business day, and Minor issues within 3 business days. These are response targets, not fix times.`,
+      `Maintenance applies to all of the Client's Workflows or none.`,
+      `Support is reactive. Proactive monitoring is an optional service quoted separately.`,
+      `If an ERP or third party removes a function a Workflow depends on, Yonyou proposes an alternative. A rebuild larger than a fix is quoted.`,
+      `A Client who lets maintenance lapse can rejoin after a paid health check.`,
+    ] },
+    { t: "AI models", c: [
+      `Workflows run on AI models that Yonyou has certified: the standard model on the AI Box, or a Cloud AI model.`,
+      `When Yonyou or its model provider retires or replaces the model in use, adjusting delivered Workflows is covered by maintenance under clause 5.2(c).`,
+      `A change of model requested by the Client is quoted separately.`,
+      `A newer model may need more powerful hardware. Hardware upgrades are never included in maintenance.`,
+      `A different model may use more or fewer AU per run.`,
+    ] },
+    { t: "AI Box", c: [
+      `Delivery lead times are estimates. Delays caused by the hardware supplier are not a breach by Yonyou.`,
+      `Remote setup is included. Onsite installation is quoted separately.`,
+      `The Client provides a suitable site: stable power with a UPS, cooling, a network connection and a secure location.`,
+      `Ownership passes to the Client on full payment. Risk passes on delivery, and the Client insures the AI Box from then.`,
+      `An AI Box found faulty within ${TC.doaDays} days of delivery is replaced.`,
+      `The AI Box is covered by the maker's warranty. Yonyou files warranty claims on the Client's behalf. Without Yonyou Care, shipping and re-setup after a repair are charged.`,
+      `While an AI Box is under repair, Workflows that run on it pause. With the Client's written consent, they can switch to Cloud AI at the Client's own AU cost.`,
+      `Before an AI Box leaves the Client's site for repair, the Client chooses whether its drive is wiped or kept.`,
+      `Repairs or replacements outside warranty are quoted.`,
+      `The Client allows Yonyou secure remote access for support. Without it, support may take longer.`,
+      `Each AI Box is sized for about ${CONFIG.usersPerBox} concurrent users. This is a sizing guide, not a performance guarantee.`,
+      `Yonyou supports each AI Box model and its standard AI model for at least ${TC.supportYears} years from delivery.`,
+      `Hardware and models named in a quotation may be replaced by equivalents.`,
+      `The AI Box replaces the AI model layer only. The YonWork platform still needs an internet connection, and workflow orchestration and run logs stay on the platform.`,
+    ] },
+    { t: "Yonyou Care (optional)", c: [
+      `Yonyou Care costs ${sgd(TC.care).replace("S$", "SGD ")} per AI Box per year. It can be bought with the AI Box or within ${TC.careBuyDays} days of delivery, and renews yearly until the end of support under clause 7.12.`,
+      `Yonyou Care covers: handling warranty claims with the maker; shipping both ways; a Cloud AI stand-in, with AU paid by Yonyou, until the AI Box is repaired or replaced; a replacement or loan unit if the AI Box is not repaired within ${TC.careRepairDays} business days; and re-setup of the model and Workflows.`,
+      `The Cloud AI stand-in sends data to a cloud model, so it needs the Client's written consent, given with the Yonyou Care order. Without consent, Workflows pause during the repair.`,
+      `Accidental damage, such as a drop, liquid or a power surge, is covered subject to the incident fee stated in the Yonyou Care order.`,
+      `After the maker's warranty ends, Yonyou Care still covers shipping, the stand-in and re-setup. Parts are quoted.`,
+      `Yonyou Care includes at most one replacement unit per year.`,
+      `Yonyou Care does not cover theft or loss, an AI Box opened or modified by the Client, unapproved software, or use outside the site requirements in clause 7.3.`,
+    ] },
+    { t: "Implementation and acceptance", c: [
+      `Test cases and sample documents are agreed before the build.`,
+      `Requirements are fixed when the specification is signed off. Later changes are change requests at ${rate} per man-day.`,
+      `UAT is accepted on the Client's sign-off, or ${TC.acceptDays} business days after UAT handover if no Critical defect is reported, or on first production use, whichever comes first.`,
+      `If Go-live is delayed by the Client for more than ${TC.deemedGoLiveDays} days after UAT acceptance, Go-live is deemed to have taken place.`,
+      `Yonyou fixes defects reported within ${TC.warrantyDays} days after Go-live at no charge, whether or not the Client takes maintenance.`,
+      `Indicative (TBC) prices are confirmed in writing after scoping. If a final price is more than ${TC.tbcTolerance}% above the indicative price, the Client may drop that Workflow without charge for it.`,
+      `The Client provides API access, a test environment, sample data, a named project owner and timely testing. Delays caused by the Client are not delays by Yonyou.`,
+      `If the Client does not respond for ${TC.pauseDays} days, the project is paused, work done is invoiced, and the restart is rescheduled.`,
+      `Timelines and man-day figures are estimates based on Yonyou's rapid implementation method. Work beyond the agreed scope is quoted separately.`,
+      `If the agreement ends for reasons attributable to the Client, the Client pays for the confirmed man-days delivered.`,
+      `If Yonyou cannot meet the agreed requirements through its own fault, the parties agree a fair refund or adjustment in good faith, capped at 25% of the implementation fees paid.`,
+    ] },
+    { t: "NCC Agents", c: [
+      `Agents are available to Clients on NC Cloud (NCC). A Client on NCC keeps at least one Agent.`,
+      `The yearly Agent fee includes setup, configuration within the scope agreed for that Agent, support, and fixes needed after NCC upgrades.`,
+      `Agents use the Client's AI Box or Cloud AI. AU used by Agents are charged as normal.`,
+      `Agents can be removed at renewal.`,
+      `Agents support the NCC versions on Yonyou's supported list.`,
+      `If the Client moves off NCC, Agents end at the end of the term. Moving Workflows to the new system is quoted.`,
+    ] },
+    { t: "Cloud AI units (AU)", c: [
+      `AU are prepaid in packs of ${CONFIG.auPerPack.toLocaleString("en-SG")} AU at ${sgd(CONFIG.auPack).replace("S$", "SGD ")} per pack.`,
+      `AU are valid for ${TC.auValidMonths} months from each top-up and are not refundable.`,
+      `Workflows that use Cloud AI pause when the AU balance reaches zero. The Client can top up at any time.`,
+      `Estimates of AU usage are not guarantees. Usage depends on document size, volume and model.`,
+      `Yonyou may change the AU price with 30 days' notice. AU already bought keep their value.`,
+    ] },
+    { t: "AI output and responsibility", c: [
+      `AI output is a draft. The Client reviews and approves it before it is posted to the ERP, sent to third parties or used to make payments.`,
+      `Where the Client chooses automatic actions, the rules, such as confidence levels and amount limits, are set out in the Workflow specification and signed off by the Client. The Client is responsible for outcomes within those rules.`,
+      `YonWork does not submit payments to banks. It prepares payment files for the Client to approve and upload.`,
+      `Yonyou does not guarantee an accuracy rate. Systematic errors are fixed under clauses 5 and 9.5.`,
+      `The Client is responsible for the accuracy of its own data, such as master data and prices.`,
+    ] },
+    { t: "Liability", c: [
+      `Yonyou's total liability under the agreement is limited to the fees the Client paid in the ${TC.liabilityMonths} months before the claim.`,
+      `Yonyou is not liable for indirect or consequential loss, including lost profit, lost revenue or business interruption.`,
+      `Yonyou is not liable for outages of the YonWork platform, AI model providers, the Client's ERP or other third-party services, and no service credits apply.`,
+      `Nothing in these terms limits liability that cannot be limited by law.`,
+    ] },
+    { t: "Intellectual property, data and confidentiality", c: [
+      `Yonyou owns the Workflows, Agents and related know-how, and may reuse them. The Client may use them while its subscription is active.`,
+      `The Client owns its data and the outputs produced from it.`,
+      `Yonyou uses Client data only to deliver and support the service, and does not use it to train AI models.`,
+      `Client data is processed by the YonWork platform and by the AI model in use: the AI Box on the Client's premises, or a Cloud AI provider. Details of providers and processing locations are available on request.`,
+      `Yonyou processes personal data on the Client's behalf in line with Singapore's Personal Data Protection Act, protects it, and notifies the Client of a data breach without undue delay.`,
+      `System credentials are kept in the platform's configuration, never in Workflow files.`,
+      `Each party keeps the other's confidential information confidential.`,
+      `Yonyou may describe a solution without naming the Client. Naming the Client needs its written consent.`,
+    ] },
+    { t: "Termination and end of service", c: [
+      `Either party may end the agreement if the other breaches it and does not remedy the breach within ${TC.cureDays} days of written notice.`,
+      `Yearly fees are not refundable. Implementation work already done is payable.`,
+      `When the agreement ends, licences, Workflows and Agents stop. Records already posted in the Client's ERP remain. The Client can export its data for ${TC.exportDays} days, after which it is deleted.`,
+      `The Client keeps any AI Box it has paid for in full.`,
+      `Help with moving to another provider is quoted.`,
+    ] },
+    { t: "General", c: [
+      `Neither party is liable for delay or failure caused by events beyond its reasonable control.`,
+      `These terms are governed by Singapore law, and the courts of Singapore have jurisdiction.`,
+      `Yonyou may update these terms. The version referred to in a signed quotation applies until that term's renewal.`,
+    ] },
+  ];
+}
+
+/* FAQ: [question EN, question ZH, answer EN, answer ZH, Terms section] */
+function faqData() {
+  const pct = Math.round(CONFIG.maintRate * 100), md = sgd(CONFIG.rate), care = sgd(TC.care);
+  const au = `${sgd(CONFIG.auPack)} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU`, auZh = `每 ${CONFIG.auPerPack.toLocaleString("en-SG")} AU ${sgd(CONFIG.auPack)}`;
+  return [
+    { id: "pricing", t: ["Pricing and billing", "价格与付款"], qs: [
+      ["Do prices include GST?", "价格含消费税（GST）吗？",
+       "No. All prices are in Singapore dollars and exclude GST, which is added where applicable.",
+       "不含。所有价格以新元计，不含消费税，适用时另行加收。", 2],
+      ["When will we be invoiced?", "什么时候开票？",
+       `Yearly fees (licences, agents, maintenance) are invoiced on signing. The AI Box and the starting AU top-up are invoiced in full on signing. Workflow implementation is invoiced 50% on signing, 30% at UAT acceptance and 20% at go-live. Invoices are due within ${TC.payDays} days.`,
+       `年费（用户许可、智能体、运维）于签约时开票。AI 一体机和首次 AU 充值于签约时全额开票。工作流实施费按签约 50%、UAT 验收 30%、上线 20% 开票。发票须在 ${TC.payDays} 天内付款。`, 2],
+      ["We pay for maintenance at signing, but it starts at go-live. Do we lose those months?", "运维费签约时支付，但上线后才开始，中间的月份会浪费吗？",
+       "No. The first 12 months of maintenance and agents count from go-live, not from signing.",
+       "不会。运维和智能体的首个 12 个月从上线日起算，而非签约日。", 2],
+      [`Is the ${CONFIG.years}-year total a fixed price?`, `${CONFIG.years} 年总投资是固定价格吗？`,
+       `It's an estimate at current prices. Recurring prices are fixed for the first ${TC.priceFixMonths} months; renewals use the list price then in force, notified at least ${TC.priceNotice} days ahead.`,
+       `这是按现行价格的估算。经常性费用首 ${TC.priceFixMonths} 个月价格固定；续约时按届时价目表计价，并至少提前 ${TC.priceNotice} 天通知。`, 4],
+      ["What if our EDG or PSG grant isn't approved?", "如果 EDG 或 PSG 补助未获批怎么办？",
+       "The agreement and payment terms don't depend on grant approval. We provide the invoices and documents your claim needs.",
+       "合同和付款条件不以补助获批为前提。我们会提供申领所需的发票和文件。", 2],
+      ["What happens if a payment is late?", "逾期付款会怎样？",
+       `If an invoice is more than ${TC.suspendDays} days overdue, licences, workflows and agents may be suspended until it is paid.`,
+       `发票逾期超过 ${TC.suspendDays} 天，用户许可、工作流和智能体可能被暂停，直至付清。`, 2],
+    ] },
+    { id: "licences", t: ["Licences", "用户许可"], qs: [
+      ["Is a licence per person?", "用户许可按人计算吗？",
+       "Yes. Each licence is for one named user and can't be shared. You can reassign it when someone leaves.",
+       "是的。每个许可对应一位指定用户，不可共用；员工离职时可转给他人。", 3],
+      ["Can we add or remove users during the year?", "年中可以增减用户吗？",
+       "Added users are charged pro rata to your renewal date, so everyone renews together. Reductions take effect at renewal; there are no mid-term refunds.",
+       "新增用户按比例计费至续约日，所有用户同时续约。减少用户于续约时生效，期中不退款。", 3],
+      ["How many users can one AI Box serve?", "一台 AI 一体机可供多少用户使用？",
+       `About ${CONFIG.usersPerBox} concurrent users. That's a sizing guide, not a guarantee; heavier workflows may need more boxes.`,
+       `约 ${CONFIG.usersPerBox} 位同时在线用户。这是配置建议而非性能保证；负载较重的工作流可能需要更多台。`, 7],
+    ] },
+    { id: "maintenance", t: ["Maintenance and support", "运维与支持"], qs: [
+      ["What does maintenance cover?", "运维包含什么？",
+       `Fixing delivered workflows that stop working as accepted at UAT; changes needed when a YonSuite, YonBIP or NCC upgrade affects them; re-testing when the AI model in use is retired or replaced; third-party format or login changes (marketplaces, banks, email) up to ${TC.thirdPartyDays} man-days a year; tuning for new layouts of documents we already read; and how-to questions by ticket. It costs ${pct}% of the workflow fee per year.`,
+       `已交付工作流无法按 UAT 验收结果运行时的修复；YonSuite、YonBIP 或 NCC 升级影响工作流时所需的调整；所用 AI 模型停用或更换时的重新测试；第三方（电商平台、银行、邮箱）格式或登录方式变化，每年最多 ${TC.thirdPartyDays} 人天；已支持单据出现新版式时的调优；以及通过工单提出的操作咨询。费用为每年工作流费用的 ${pct}%。`, 5],
+      ["What isn't covered?", "哪些不在运维范围内？",
+       `A new AI model you ask for, new input sources or document types, new features or reports, changes to your organisation or processes, moving to another system, performance work for higher volumes, data clean-up and training. These are quoted at ${md} per man-day.`,
+       `您要求更换的新 AI 模型、新的输入来源或单据类型、新功能或报表、贵司组织或流程变更、迁移到其他系统、业务量增长带来的性能优化、数据清理和培训。以上按每人天 ${md} 另行报价。`, 5],
+      ["When can we reach support, and how fast do you respond?", "何时可以联系支持？响应有多快？",
+       "Monday to Friday, 9:00–18:00 Singapore time, by email or ticket. We aim to respond to Critical issues the same business day, Major issues by the next business day and Minor issues within 3 business days. These are response targets, not fix times.",
+       "新加坡时间周一至周五 9:00–18:00，通过邮件或工单。紧急问题目标当个工作日响应，重要问题下一个工作日，一般问题 3 个工作日内。以上为响应目标，而非修复时限。", 5],
+      ["Can we take maintenance for some workflows only?", "可以只为部分工作流购买运维吗？",
+       "No. Maintenance covers all your workflows or none, because workflows often share parts.",
+       "不可以。运维须覆盖全部工作流或全部不含，因为工作流之间常有共用部分。", 5],
+      ["We didn't take maintenance and found a bug after go-live. Is the fix free?", "没有购买运维，上线后发现问题，修复免费吗？",
+       `Yes, for defects reported within ${TC.warrantyDays} days after go-live. After that, fixes are quoted.`,
+       `上线后 ${TC.warrantyDays} 天内报告的缺陷免费修复，之后另行报价。`, 9],
+    ] },
+    { id: "models", t: ["AI models", "AI 模型"], qs: [
+      ["Which AI model runs our workflows?", "工作流使用哪个 AI 模型？",
+       "A model Yonyou has certified: the standard model on the Enterprise AI Box, or a Cloud AI model.",
+       "由用友认证的模型：企业级 AI 一体机上的标准模型，或云端 AI 模型。", 6],
+      ["If the AI model is retired or replaced, do we pay to adjust our workflows?", "AI 模型停用或更换时，调整工作流要收费吗？",
+       "Not if you have maintenance: re-testing and adjusting delivered workflows is covered. If you ask for a different model yourself, the work is quoted, and a newer model may need more powerful hardware.",
+       "如已购买运维则不收费：已交付工作流的重新测试和调整包含在运维中。如您主动要求更换模型，相关工作另行报价，且新模型可能需要性能更强的硬件。", 6],
+    ] },
+    { id: "box", t: ["AI Box and Yonyou Care", "AI 一体机与 Yonyou Care"], qs: [
+      ["What happens if the AI Box breaks?", "AI 一体机坏了怎么办？",
+       "It's covered by the maker's warranty and we file the claim for you. While it's under repair, workflows on the box pause; with your consent they can switch to Cloud AI at your own AU cost. Without Yonyou Care, shipping and re-setup are charged.",
+       "由原厂保修覆盖，我们代为提出保修申请。维修期间，运行在一体机上的工作流暂停；经您同意，可切换到云端 AI，AU 费用由您承担。未购买 Yonyou Care 时，运输和重新部署另行收费。", 7],
+      ["What is Yonyou Care?", "什么是 Yonyou Care？",
+       `An optional plan at ${care} per AI Box per year. We handle the warranty claim and shipping, run your workflows on Cloud AI at our cost until the box is repaired or replaced, replace or lend a unit if repair takes more than ${TC.careRepairDays} business days, and set everything up again.`,
+       `可选服务，每台 AI 一体机每年 ${care}。我们负责保修申请和往返运输，在一体机修复或更换前以云端 AI 运行您的工作流（费用由我们承担），维修超过 ${TC.careRepairDays} 个工作日则提供替换机或借用机，并完成重新部署。`, 8],
+      ["When can we buy Yonyou Care, and what does it exclude?", "何时可以购买 Yonyou Care？哪些情况不保？",
+       `With the AI Box or within ${TC.careBuyDays} days of delivery. It excludes theft or loss, a box opened or modified by you, unapproved software, and use outside the site requirements. Accidental damage is covered subject to an incident fee.`,
+       `购买一体机时或交付后 ${TC.careBuyDays} 天内。不包括盗窃或遗失、自行拆开或改装、安装未经认可的软件，以及不符合场地要求的使用。意外损坏可保，但需支付单次事故费用。`, 8],
+      ["Who owns the AI Box, and what does it need on site?", "AI 一体机归谁所有？现场需要什么条件？",
+       "You own it once it's paid in full; it's at your risk from delivery, so please insure it. It needs stable power with a UPS, cooling, a network connection, a secure location and remote access for support.",
+       "付清全款后归您所有；交付后风险由您承担，请为其投保。需要稳定电源及 UPS、散热、网络连接、安全的放置位置，并允许远程支持访问。", 7],
+      ["Does the AI Box work without the internet?", "AI 一体机可以离线运行吗？",
+       "No. The box replaces only the AI model layer. The YonWork platform still needs the internet, and workflow orchestration and logs stay on the platform.",
+       "不可以。一体机仅替代 AI 模型推理层，YonWork 平台仍需联网，工作流编排和运行日志仍保留在平台上。", 7],
+    ] },
+    { id: "cloud", t: ["Cloud AI units", "云端 AI 点数"], qs: [
+      ["How do AI Units (AU) work?", "AI 点数（AU）如何计费？",
+       `AU are prepaid at ${au} and used each time a workflow calls Cloud AI. They're valid for ${TC.auValidMonths} months from each top-up and aren't refundable. Usage estimates aren't guarantees.`,
+       `AU 预付购买，${auZh}，工作流每次调用云端 AI 时扣除。每次充值的 AU 有效期 ${TC.auValidMonths} 个月，不予退款。用量估算不作保证。`, 11],
+      ["What happens when our AU run out?", "AU 用完会怎样？",
+       "Workflows that use Cloud AI pause until you top up. You can top up at any time.",
+       "使用云端 AI 的工作流会暂停，直至充值。您可随时充值。", 11],
+      ["Where does our data go with Cloud AI?", "使用云端 AI 时，数据会传到哪里？",
+       "It's processed by the YonWork platform and Yonyou's Cloud AI provider. Provider and processing-location details are available on request. If your data must stay on site, choose the Enterprise AI Box.",
+       "数据由 YonWork 平台和用友选定的云端 AI 服务商处理。服务商及处理地点信息可应要求提供。如数据须留在本地，请选择企业级 AI 一体机。", 14],
+    ] },
+    { id: "agents", t: ["NCC agents", "NCC 智能体"], qs: [
+      ["What does the yearly agent fee include?", "智能体年费包含什么？",
+       "Setup, configuration within the agreed scope, support, and fixes after NCC upgrades. The AI the agent uses runs on your AI Box or Cloud AI, and AU are charged as normal.",
+       "部署、约定范围内的配置、支持服务，以及 NCC 升级后的修复。智能体使用的 AI 运行在您的一体机或云端 AI 上，AU 照常计费。", 10],
+      ["Can we remove an agent?", "可以取消智能体吗？",
+       "At renewal. Clients on NCC keep at least one agent.",
+       "可在续约时取消。NCC 客户须保留至少一个智能体。", 10],
+    ] },
+    { id: "implementation", t: ["Implementation", "实施与验收"], qs: [
+      ["When is UAT accepted?", "UAT 何时视为验收？",
+       `When you sign off, or ${TC.acceptDays} business days after UAT handover if no Critical defect is reported, or on first production use, whichever comes first.`,
+       `您签字确认时；或 UAT 交付后 ${TC.acceptDays} 个工作日内未报告紧急缺陷；或首次正式使用时，以最早者为准。`, 9],
+      ["What does \"~\" or \"TBC\" on a price mean?", "价格上的「~」或「待定」是什么意思？",
+       `It's an indicative price, confirmed in writing after scoping. If the final price is more than ${TC.tbcTolerance}% above it, you can drop that workflow at no charge for it.`,
+       `表示参考价，确认范围后书面确定。如最终价格高出参考价 ${TC.tbcTolerance}% 以上，您可取消该工作流且无需支付其费用。`, 9],
+      ["Can we change requirements during the build?", "开发过程中可以修改需求吗？",
+       `Requirements are fixed at specification sign-off. Later changes are change requests at ${md} per man-day.`,
+       `需求在规格确认时冻结，之后的变更按每人天 ${md} 作为变更请求处理。`, 9],
+    ] },
+    { id: "data", t: ["Data and security", "数据与安全"], qs: [
+      ["Who owns the workflows and our data?", "工作流和数据归谁所有？",
+       "Yonyou owns the workflows and agents and may reuse them; you can use them while your subscription is active. You own your data and the outputs.",
+       "工作流和智能体归用友所有，用友可重复使用；订阅期内您可使用。您的数据及产出归您所有。", 14],
+      ["Do you train AI models on our data?", "你们会用我们的数据训练 AI 模型吗？",
+       "Yonyou doesn't. We use your data only to deliver and support the service, in line with Singapore's PDPA.",
+       "用友不会。我们仅为提供和支持服务而使用您的数据，并遵守新加坡《个人数据保护法》（PDPA）。", 14],
+      ["Can the AI post wrong entries or pay the wrong amount?", "AI 会不会录错账或付错款？",
+       "AI output is a draft you approve before it's posted, sent or paid. Automatic actions run only under rules you sign off in the workflow specification, and YonWork never sends payments to a bank; it prepares the file for you to upload.",
+       "AI 输出均为草稿，须经您批准后才会入账、发送或付款。自动操作仅按您在工作流规格中确认的规则执行；YonWork 从不直接向银行付款，只生成付款文件供您上传。", 12],
+      ["Will you name us as a client?", "你们会公开我们的客户名称吗？",
+       "Only with your written consent. Otherwise we describe the solution without naming you.",
+       "只有在获得您书面同意后才会。否则我们只介绍方案，不提及贵司名称。", 14],
+    ] },
+    { id: "contract", t: ["Contract", "合同"], qs: [
+      ["How long is the contract, and how do we stop it?", "合同期多长？如何终止？",
+       `12 months, renewing yearly unless either side gives written notice at least ${TC.renewNotice} days before renewal. Yearly fees aren't refundable.`,
+       `12 个月，到期自动续约一年，除非任一方在续约前至少 ${TC.renewNotice} 天书面通知。年费不予退还。`, 4],
+      ["What happens when we leave?", "终止合作后会怎样？",
+       `Licences, workflows and agents stop. Records already in your ERP stay. You can export your data for ${TC.exportDays} days, after which it's deleted. You keep any AI Box you've paid for.`,
+       `用户许可、工作流和智能体停止运行，已入账到 ERP 的记录保留。您可在 ${TC.exportDays} 天内导出数据，之后数据将被删除。已付清的 AI 一体机归您所有。`, 15],
+    ] },
+  ];
+}
+
+const termRef = n => `<button class="tlink" data-tref="${n}">${zh() ? `条款第 ${n} 节` : `Terms §${n}`}</button>`;
+
+function renderFaq() {
+  const i = zh() ? 1 : 0, q = (S.faqQ || "").trim().toLowerCase(), cats = faqData();
+  const input = $("faqQ");
+  input.placeholder = t("faqSearch");
+  if (document.activeElement !== input) input.value = S.faqQ || "";
+  const html = cats.map(c => {
+    const items = c.qs.filter(x => !q || `${x[i]} ${x[i + 2]}`.toLowerCase().includes(q));
+    if (!items.length) return "";
+    return `<section class="glass card faqcat" id="fq-${c.id}"><h3>${esc(c.t[i])}</h3>${items.map(x =>
+      `<details class="qa"${q ? " open" : ""}><summary>${esc(x[i])}</summary><div class="ans">${esc(x[i + 2])} ${termRef(x[4])}</div></details>`).join("")}</section>`;
+  }).join("");
+  $("faqList").innerHTML = html || `<div class="glass card empty">${t("faqNone")}</div>`;
+  $("faqToc").innerHTML = cats.map(c => `<button data-goto-id="fq-${c.id}"><i>${c.qs.length}</i><span>${esc(c.t[i])}</span></button>`).join("");
+}
+
+function renderTerms() {
+  const secs = termsData();
+  $("termsToc").innerHTML = secs.map((s, n) => `<button data-goto-id="t-${n + 1}"><i>${n + 1}</i><span>${esc(s.t)}</span></button>`).join("");
+  $("termsDoc").innerHTML = `<h2>YonWork Terms and Conditions</h2>
+    <div class="meta"><span>Version ${esc(TC.version)}</span><span>·</span><span>Effective ${esc(TC.effective)}</span><span>·</span><span>Yonyou Network Technology (Singapore) Private Limited</span>
+      <button class="btn noprint" data-print>${L("Print or save as PDF", "打印或另存为 PDF")}</button></div>
+    ${zh() ? `<div class="zhnote noprint">本条款以英文版本为准。中文简要说明请见「常见问题」。</div>` : ""}
+    ${secs.map((s, n) => `<section id="t-${n + 1}"><h3>${n + 1}. ${esc(s.t)}</h3><ol>${s.c.map((c, k) =>
+      `<li><b>${n + 1}.${k + 1}</b><span>${esc(c)}</span></li>`).join("")}</ol></section>`).join("")}`;
+}
+
+let docsKey = "";
+function renderDocs(view) {
+  const key = `${view}|${S.lang}|${view === "faq" ? S.faqQ : ""}`;
+  if (key === docsKey) return;
+  docsKey = key;
+  if (view === "faq") renderFaq(); else if (view === "terms") renderTerms();
+}
+
+
+// ---- Excel quotation (.xlsx written by hand: no library, works offline) ----
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const xesc = s => String(s ?? "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+  .replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+
+/** Stored (uncompressed) zip: [{ name, text }] → Blob. */
+function zipBlob(files) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true);
+    h.setUint16(12, 0x0021, true); h.setUint32(14, crc, true);
+    h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
+    parts.push(new Uint8Array(h.buffer), name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint16(14, 0x0021, true); c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true);
+    c.setUint16(28, name.length, true); c.setUint32(42, offset, true);
+    central.push(new Uint8Array(c.buffer), name);
+    offset += 30 + name.length + data.length;
+  }
+  const size = central.reduce((a, b) => a + b.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, size, true); e.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: XLSX_MIME });
+}
+
+/** Cell styles, de-duplicated into styles.xml. */
+function StyleBook() {
+  const fonts = ['<font><sz val="10"/><color rgb="FF1E1A2B"/><name val="Arial"/></font>'];
+  const fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>'];
+  const borders = ['<border><left/><right/><top/><bottom/><diagonal/></border>'];
+  const numFmts = [], xfs = ['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'], cache = new Map();
+  const add = (arr, x) => { let i = arr.indexOf(x); if (i < 0) { arr.push(x); i = arr.length - 1; } return i; };
+  return {
+    id(o = {}) {
+      const key = JSON.stringify(o);
+      if (cache.has(key)) return cache.get(key);
+      const font = add(fonts, `<font>${o.b ? "<b/>" : ""}${o.i ? "<i/>" : ""}<sz val="${o.sz || 10}"/><color rgb="FF${o.color || "1E1A2B"}"/><name val="Arial"/></font>`);
+      const fill = o.fill ? add(fills, `<fill><patternFill patternType="solid"><fgColor rgb="FF${o.fill}"/><bgColor indexed="64"/></patternFill></fill>`) : 0;
+      const side = n => `<${n} style="thin"><color rgb="FFDCDCE2"/></${n}>`;
+      const border = o.border ? add(borders, `<border>${side("left")}${side("right")}${side("top")}${side("bottom")}<diagonal/></border>`) : 0;
+      const fmt = o.fmt ? 164 + add(numFmts, o.fmt) : 0;
+      xfs.push(`<xf numFmtId="${fmt}" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"${fmt ? ' applyNumberFormat="1"' : ""}>`
+        + `<alignment horizontal="${o.h || "general"}" vertical="${o.v || "center"}"${o.wrap ? ' wrapText="1"' : ""}/></xf>`);
+      cache.set(key, xfs.length - 1);
+      return xfs.length - 1;
+    },
+    xml() {
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        + (numFmts.length ? `<numFmts count="${numFmts.length}">${numFmts.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xesc(f)}"/>`).join("")}</numFmts>` : "")
+        + `<fonts count="${fonts.length}">${fonts.join("")}</fonts><fills count="${fills.length}">${fills.join("")}</fills>`
+        + `<borders count="${borders.length}">${borders.join("")}</borders>`
+        + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        + `<cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs>`
+        + '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+    },
+  };
+}
+
+const colName = c => String.fromCharCode(64 + c);   // A..H is all we use
+const ref = (r, c) => colName(c) + r;
+
+/** One worksheet: cells, merges, row heights. */
+function SheetBook(styles) {
+  const rows = new Map(), merges = [], heights = new Map();
+  const put = (r, c, xml) => { if (!rows.has(r)) rows.set(r, new Map()); rows.get(r).set(c, xml); };
+  const has = (r, c) => rows.has(r) && rows.get(r).has(c);
+  const sheet = {
+    /** v: string | number | null | { rich: [{ t, b }] }; f: formula without "=". */
+    cell(r, c, v, style = {}, f) {
+      const s = styles.id(style), at = `r="${ref(r, c)}" s="${s}"`;
+      if (f != null) put(r, c, `<c ${at}${typeof v === "string" ? ' t="str"' : ""}><f>${xesc(f)}</f><v>${xesc(v ?? 0)}</v></c>`);
+      else if (typeof v === "number") put(r, c, `<c ${at}><v>${v}</v></c>`);
+      else if (v && v.rich) put(r, c, `<c ${at} t="inlineStr"><is>${v.rich.map(p =>
+        `<r><rPr>${p.b ? "<b/>" : ""}<sz val="10"/><color rgb="FF${p.color || style.color || "1E1A2B"}"/><rFont val="Arial"/></rPr><t xml:space="preserve">${xesc(p.t)}</t></r>`).join("")}</is></c>`);
+      else if (v != null && v !== "") put(r, c, `<c ${at} t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`);
+      else put(r, c, `<c ${at}/>`);
+      return sheet;
+    },
+    /** Merge and give every covered cell the same style, so borders and fills run across. */
+    merge(r1, c1, r2, c2, style = {}) {
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) if (!has(r, c)) sheet.cell(r, c, null, style);
+      if (r1 !== r2 || c1 !== c2) merges.push(`${ref(r1, c1)}:${ref(r2, c2)}`);
+      return sheet;
+    },
+    height(r, h) { heights.set(r, h); return sheet; },
+    xml(widths, lastRow) {
+      const rowsXml = [...rows.keys()].sort((a, b) => a - b).map(r => {
+        const cells = [...rows.get(r).entries()].sort((a, b) => a[0] - b[0]).map(e => e[1]).join("");
+        const h = heights.get(r);
+        return `<row r="${r}"${h ? ` ht="${h}" customHeight="1"` : ""}>${cells}</row>`;
+      }).join("");
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        + '<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
+        + `<dimension ref="A1:H${lastRow}"/>`
+        + '<sheetViews><sheetView workbookViewId="0" showGridLines="0" zoomScale="100"/></sheetViews>'
+        + '<sheetFormatPr defaultRowHeight="15"/>'
+        + `<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols>`
+        + `<sheetData>${rowsXml}</sheetData>`
+        + (merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join("")}</mergeCells>` : "")
+        + '<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>'
+        + '<pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/>'
+        + "</worksheet>";
+    },
+  };
+  return sheet;
+}
+
+/** Row height for wrapped text spread over a merge `chars` characters wide. */
+function wrapHeight(text, chars, min = 18) {
+  const lines = String(text).split("\n").reduce((n, line) => n + Math.max(1, Math.ceil(line.length / chars)), 0);
+  return Math.max(min, Math.round(lines * 12.6 + 5));
+}
+
+const XL = {
+  violet: "C8102E", deep: "A00D25", lav: "F2F2F4", lav2: "FAFAFB", lav3: "EDEDF0", muted: "6B6B73", ink: "1E1A2B",
+  money: '#,##0.00;-#,##0.00;"-"', md: '0.0#;-0.0#;"-"', qty: "#,##0",
+};
+
+function buildQuotationXlsx() {
+  const T = totals(), c = S.client, now = new Date();
+  const company = c.company.trim() || "the client";
+  const companys = /s$/i.test(company) ? company + "'" : company + "'s";
+  const styles = StyleBook(), sh = SheetBook(styles);
+  const st = {
+    title: { b: 1, sz: 20, color: XL.violet, h: "center" },
+    label: { b: 1 }, value: {}, date: { fmt: "dd mmmm yyyy", h: "left" },
+    section: { b: 1, sz: 11, color: XL.violet, border: 1 },
+    th: { b: 1, fill: XL.lav, border: 1, h: "center", wrap: 1 },
+    sn: { border: 1, h: "center", v: "top" },
+    desc: { border: 1, wrap: 1, v: "top" },
+    qty: { border: 1, h: "center", v: "top", fmt: XL.qty },
+    md: { border: 1, h: "center", v: "top", fmt: XL.md },
+    money: { border: 1, v: "top", fmt: XL.money },
+    tbc: { border: 1, v: "top", h: "right", b: 1, color: XL.violet },
+    sub: { b: 1, fill: XL.lav2, border: 1 },
+    subMd: { b: 1, fill: XL.lav2, border: 1, h: "center", fmt: '0.0#" man-days"' },
+    subMoney: { b: 1, fill: XL.lav2, border: 1, fmt: XL.money },
+    note: { i: 1, wrap: 1, fill: XL.lav2, border: 1, v: "top", color: XL.muted },
+    group: { b: 1, color: XL.violet, border: 1 },
+    line: { border: 1 }, lineMoney: { border: 1, fmt: XL.money },
+    key: { b: 1, fill: XL.lav3, border: 1 }, keyMoney: { b: 1, fill: XL.lav3, border: 1, fmt: XL.money },
+    grand: { b: 1, color: XL.violet, fill: XL.lav3, border: 1 }, grandMoney: { b: 1, color: XL.violet, fill: XL.lav3, border: 1, fmt: XL.money },
+    payAmt: { b: 1, h: "right", fmt: "#,##0.00" }, payText: { wrap: 1 },
+    terms: { wrap: 1, v: "top" },
+    pct: { border: 1, h: "center", v: "top", fmt: "0%" },
+  };
+  let r = 1;
+  sh.cell(r, 1, "QUOTATION", st.title).merge(1, 1, 1, 8, st.title).height(1, 40);
+
+  // Header block
+  const pad = n => String(n).padStart(2, "0");
+  const refNo = `YW-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const serial = d => Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+  const valid = new Date(now); valid.setMonth(valid.getMonth() + 1);
+  const head = [["To:", c.company, "Reference No:", refNo], ["Attn To:", c.contact, "Prepared by:", c.manager],
+                ["E-mail:", c.email, "Valid until:", serial(valid)], ["Date:", serial(now), "ERP Platform:", erpName()]];
+  head.forEach(([l1, v1, l2, v2], i) => {
+    const row = 3 + i;
+    sh.cell(row, 1, l1, st.label).merge(row, 1, row, 2, st.label);
+    sh.cell(row, 3, v1, typeof v1 === "number" ? st.date : st.value).merge(row, 3, row, 5, typeof v1 === "number" ? st.date : st.value);
+    sh.cell(row, 6, l2, st.label).merge(row, 6, row, 7, st.label);
+    sh.cell(row, 8, v2, typeof v2 === "number" ? st.date : st.value);
+    sh.height(row, 17);
+  });
+  r = 8;
+  const intro = "Thank you for expressing interest in Yonyou and our products. It is indeed a pleasure to serve you and your organization. I am pleased to quote you as follows:";
+  sh.cell(r, 1, intro, { wrap: 1 }).merge(r, 1, r, 8, { wrap: 1 }).height(r, 28);
+  r = 10;
+
+  const DESC_CHARS = 62, FULL_CHARS = 115;
+  const sectionHead = (title, cols) => {
+    sh.cell(r, 1, title, st.section).merge(r, 1, r, 8, st.section).height(r, 22); r++;
+    sh.cell(r, 1, "S/N", st.th).cell(r, 2, "Description", st.th).merge(r, 2, r, 5, st.th)
+      .cell(r, 6, cols[0], st.th).cell(r, 7, cols[1], st.th).cell(r, 8, "Amount\n(SGD)", st.th).height(r, 28); r++;
+  };
+  const item = (sn, title, body, qty, qtyStyle, unit, amountOverride) => {
+    const text = body ? `${title}\n${body}` : title;
+    sh.cell(r, 1, sn, st.sn)
+      .cell(r, 2, { rich: [{ t: title, b: 1 }, ...(body ? [{ t: "\n" + body }] : [])] }, st.desc).merge(r, 2, r, 5, st.desc)
+      .cell(r, 6, qty, qtyStyle).cell(r, 7, unit, st.money);
+    if (amountOverride != null) sh.cell(r, 8, amountOverride, st.tbc);
+    else sh.cell(r, 8, (qty || 0) * unit, st.money, `${ref(r, 6)}*${ref(r, 7)}`);
+    sh.height(r, wrapHeight(text, DESC_CHARS, 30));
+    return r++;
+  };
+  const note = text => { sh.cell(r, 1, text, st.note).merge(r, 1, r, 8, st.note).height(r, wrapHeight(text, FULL_CHARS, 28)); r++; };
+
+  // Part A
+  sectionHead("Part A - Product Cost (Annual Recurring Cost)", ["Qty", "Unit Price\n(SGD)"]);
+  const a1 = item("A.1", "YonWork User License Fee",
+    ` - Annual subscription fee for ${S.users} named user${S.users === 1 ? "" : "s"}, providing access to the YonWork workflows deployed for ${company}.`,
+    S.users, st.qty, CONFIG.licence);
+  sh.cell(r, 1, "Subtotal (Yearly)", st.sub).merge(r, 1, r, 7, st.sub);
+  const rowA = r; sh.cell(r, 8, T.licence, st.subMoney, `SUM(H${a1}:H${a1})`).height(r, 19); r += 2;
+
+  // Part B
+  const cloud = S.aiMode === "cloud";
+  sectionHead(cloud ? "Part B - Cloud AI Usage (Pay As You Go)" : "Part B - Hardware Cost (One-Time Cost)", ["Qty", "Unit Price\n(SGD)"]);
+  const b1 = cloud
+    ? item("B.1", "Cloud AI Units (AU): Starting Top-Up", `Pay-as-you-go credits for the cloud AI model that runs the YonWork workflows. One pack = ${CONFIG.auPerPack.toLocaleString("en-SG")} AU.\n - Starting top-up: ${(S.packs * CONFIG.auPerPack).toLocaleString("en-SG")} AU (${S.packs} pack${S.packs === 1 ? "" : "s"})\n - Top up anytime at SGD ${CONFIG.auPack} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU`,
+        S.packs, st.qty, CONFIG.auPack)
+    : item("B.1", "Enterprise AI Box", `On-premise AI server running a local large language model, so that business data sent to the model is processed on ${companys} premises instead of a public cloud model.\n - Hardware: NVIDIA GB10 (Grace Blackwell), 128 GB unified memory, NVMe storage\n - Model: Qwen3.8-27B (standard local model for YonWork)`,
+        S.boxes, st.qty, CONFIG.box);
+  sh.cell(r, 1, cloud ? "Subtotal (Starting Top-Up)" : "Subtotal (One-Time Cost)", st.sub).merge(r, 1, r, 7, st.sub);
+  const rowB = r; sh.cell(r, 8, T.hardware, st.subMoney, `SUM(H${b1}:H${b1})`).height(r, 19); r++;
+  note(cloud
+    ? `Note: Cloud AI is pay as you go. AU are used as the workflows call the cloud AI model, and ${company} can top up at any time at SGD ${CONFIG.auPack} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU. Only the starting top-up is included in the totals below.`
+    : "Note: The Enterprise AI Box replaces the model inference layer only. The YonWork platform itself still requires an internet connection, and workflow orchestration and run logs stay on the YonWork platform.");
+  r++;
+
+  // Part C
+  sectionHead("Part C - Implementation Services Fee (One-Time Cost)", ["Man-days", "Rate\n(SGD)"]);
+  const n = T.chosen.length;
+  const groupText = n ? `Workflow Setup: ${n} YonWork workflow${n === 1 ? "" : "s"} (design, build, testing and handover per workflow)` : "Workflow Setup: no workflows selected yet";
+  sh.cell(r, 1, groupText, st.group).merge(r, 1, r, 8, st.group).height(r, 18); r++;
+  const firstC = r;
+  T.chosen.forEach((w, i) => {
+    const steps = w.flow.map(s => ` - ${s.s}: ${s.n}`).join("\n");
+    const name = `Workflow ${i + 1}: ${w.en}${w.price == null || w.tbc ? " (TBC)" : ""}`;
+    if (w.price == null) item(`C.${i + 1}`, name, `${w.sum}\n${steps}`, null, st.md, CONFIG.rate, "TBC");
+    else item(`C.${i + 1}`, name, `${w.sum}\n${steps}`, w.price / CONFIG.rate, st.md, CONFIG.rate);
+  });
+  if (!n) item("C.1", "No workflows selected", "", 0, st.md, CONFIG.rate);
+  const lastC = r - 1;
+  const mdTotal = T.chosen.reduce((a, w) => a + (w.price || 0) / CONFIG.rate, 0);
+  sh.cell(r, 1, "Subtotal (One-Time Cost)", st.sub).merge(r, 1, r, 5, st.sub)
+    .cell(r, 6, mdTotal, st.subMd, `SUM(F${firstC}:F${lastC})`).cell(r, 7, null, st.sub);
+  const rowC = r; sh.cell(r, 8, T.workflow, st.subMoney, `SUM(H${firstC}:H${lastC})`).height(r, 19); r++;
+  let cNote = "Man-days per workflow are estimated from what each workflow reads, decides, writes and delivers, plus specification, testing and handover.";
+  if (T.tbc.length) cNote += " Workflows marked (TBC) with a price are indicative: the client decides the deliverables (content, layout, metrics), so the price is confirmed after scoping and may change.";
+  if (T.none.length) cNote += " Workflows shown as TBC without a price are not included in the total and will be quoted after scoping.";
+  note(cNote);
+  r++;
+
+  // Part D - AI agents (NCC only)
+  let rowAg = null;
+  if (T.ncc) {
+    sectionHead("Part D - AI Agent Cost (Annual Recurring Cost)", ["Qty", "Unit Price\n(SGD)"]);
+    const firstAg = r;
+    T.agents.forEach((a, i) => item(`D.${i + 1}`, a.en, " - Yearly fee per agent.", 1, st.qty, a.price));
+    if (!T.agents.length) item("D.1", "No agent selected", "", 0, st.qty, 0);
+    const lastAg = r - 1;
+    sh.cell(r, 1, "Subtotal (Yearly)", st.sub).merge(r, 1, r, 7, st.sub);
+    rowAg = r; sh.cell(r, 8, T.agent, st.subMoney, `SUM(H${firstAg}:H${lastAg})`).height(r, 19); r += 2;
+  }
+
+  // Part D / E - maintenance: 10% of Part C per year
+  const mtPart = T.ncc ? "E" : "D";
+  sectionHead(`Part ${mtPart} - Yearly Maintenance Cost (Annual Recurring Cost)`, ["Rate", "Base\n(SGD)"]);
+  const mtBody = S.maint
+    ? ` - ${Math.round(CONFIG.maintRate * 100)}% of the implementation services fee (Part C) per year, once the workflows are live.`
+    : " - Not included: the client has opted out of yearly maintenance.";
+  const m1 = r;
+  sh.cell(r, 1, `${mtPart}.1`, st.sn)
+    .cell(r, 2, { rich: [{ t: "Maintenance & Support", b: 1 }, { t: "\n" + mtBody }] }, st.desc).merge(r, 2, r, 5, st.desc)
+    .cell(r, 6, S.maint ? CONFIG.maintRate : 0, st.pct)
+    .cell(r, 7, T.workflow, st.money, `H${rowC}`)
+    .cell(r, 8, T.maintenance, st.money, `ROUND(F${r}*G${r},2)`)
+    .height(r, wrapHeight(`Maintenance & Support\n${mtBody}`, DESC_CHARS, 30)); r++;
+  sh.cell(r, 1, "Subtotal (Yearly)", st.sub).merge(r, 1, r, 7, st.sub);
+  const rowM = r; sh.cell(r, 8, T.maintenance, st.subMoney, `SUM(H${m1}:H${m1})`).height(r, 19); r += 2;
+
+  // Commercial summary
+  sh.cell(r, 1, "Commercial Summary", st.section).merge(r, 1, r, 8, st.section).height(r, 22); r++;
+  sh.cell(r, 1, "Description", st.th).merge(r, 1, r, 7, st.th).cell(r, 8, "Amount (SGD)", st.th).height(r, 19); r++;
+  const sumLine = (label, value, f, ls = st.line, ms = st.lineMoney) => {
+    sh.cell(r, 1, label, ls).merge(r, 1, r, 7, ls).cell(r, 8, value, ms, f).height(r, 19); return r++;
+  };
+  const sA = sumLine("Part A - Product Cost (Annual Recurring Cost)", T.licence, `H${rowA}`);
+  const sB = sumLine(cloud ? "Part B - Cloud AI Usage (Starting Top-Up, Pay As You Go)" : "Part B - Hardware Cost (One-Time Cost)", T.hardware, `H${rowB}`);
+  const sC = sumLine("Part C - Implementation Services Fee (One-Time Cost)", T.workflow, `H${rowC}`);
+  const sAg = T.ncc ? sumLine("Part D - AI Agent Cost (Annual Recurring Cost)", T.agent, `H${rowAg}`) : null;
+  const sM = sumLine(`Part ${mtPart} - Yearly Maintenance Cost (Annual Recurring Cost)`, T.maintenance, `H${rowM}`);
+  const rec = T.ncc
+    ? sumLine("Annual Recurring Cost (A + D + E)", T.recurring, `H${sA}+H${sAg}+H${sM}`, st.key, st.keyMoney)
+    : sumLine("Annual Recurring Cost (A + D)", T.recurring, `H${sA}+H${sM}`, st.key, st.keyMoney);
+  const one = sumLine(cloud ? "Upfront Cost (B + C)" : "One-Time Cost (B + C)", T.oneTime, `H${sB}+H${sC}`, st.key, st.keyMoney);
+  sumLine("Total First-Year Investment", T.first, `H${rec}+H${one}`, st.grand, st.grandMoney);
+  sumLine(`Total ${CONFIG.years}-Year Investment (at current prices)`, T.three, `H${rec}*${CONFIG.years}+H${one}`, st.grand, st.grandMoney);
+  r++;
+
+  // Payment terms
+  sh.cell(r, 2, "Payment terms", st.label); r++;
+  const payFirst = r;
+  const pay = (amount, f, text) => {
+    sh.cell(r, 3, amount, st.payAmt, f).cell(r, 4, text, st.payText).merge(r, 4, r, 8, st.payText).height(r, wrapHeight(text, 70, 16)); r++;
+  };
+  pay(T.recurring, `H${rec}`, T.ncc
+    ? "——100% of the yearly licence, AI agent and maintenance fees (Parts A, D and E) upon contract signing, and in advance for each renewal. The first 12-month term of agents and maintenance starts on go-live."
+    : "——100% of the yearly licence and maintenance fees (Parts A and D) upon contract signing, and in advance for each renewal. The first 12-month term of maintenance starts on go-live.");
+  pay(T.hardware, `H${sB}`, cloud ? "——100% of the starting AI Unit top-up (Part B) upon contract signing. Later top-ups are paid when purchased." : "——100% of the hardware cost (Part B) upon contract signing.");
+  pay(T.workflow * 0.5, `H${sC}*50%`, "——50% of the implementation services fee (Part C) upon contract signing.");
+  pay(T.workflow * 0.3, `H${sC}*30%`, "——30% of the implementation services fee upon User Acceptance Testing (UAT).");
+  pay(T.workflow * 0.2, `H${sC}*20%`, "——20% of the implementation services fee upon go-live.");
+  pay(T.first, `SUM(C${payFirst}:C${r - 1})`, "——First year total.");
+  r++;
+
+  // Terms: aligned with the published Terms and Conditions (TC, termsData)
+  const pageUrl = /^https?:/i.test(location.href) ? location.href.split("#")[0] + "#terms" : "";
+  const termsRef = pageUrl ? `the YonWork Terms and Conditions, Version ${TC.version} (${pageUrl})` : `the YonWork Terms and Conditions, Version ${TC.version}, issued with this quotation`;
+  const pct = Math.round(CONFIG.maintRate * 100);
+  const termLines = ["Quotation Terms:",
+    "1. The quoted price is in Singapore Dollars (SGD).",
+    "2. The quoted price excludes taxes. Singapore GST will be charged where applicable.",
+    "3. This quotation is valid for one (1) month from the date of issuance.",
+    `4. This quotation is subject to ${termsRef}. "Party A" means the client named above and "Party B" means Yonyou Network Technology (Singapore) Private Limited.`,
+    `5. Yearly fees (Parts A${T.ncc ? ", D" : ""} and ${mtPart}) are invoiced on contract signing. The licence term starts on signing; the first 12-month term of ${T.ncc ? "AI agents and " : ""}maintenance starts on go-live.`,
+    `6. Recurring prices are fixed for the first ${TC.priceFixMonths} months, then renew at the list price in force, notified at least ${TC.priceNotice} days before renewal. The ${CONFIG.years}-year total is an estimate at current prices.`,
+    "",
+    "Maintenance Terms:",
+    `1. Maintenance is ${pct}% of the implementation services fee (Part C) per year. It covers fixing delivered workflows that stop working as accepted at UAT, changes needed when a YonSuite, YonBIP or NCC upgrade affects them, and re-testing when the AI model in use is retired or replaced.`,
+    "2. It does not cover an AI model requested by Party A, new input sources or formats, new features, or changes to Party A's organisation or processes. These are quoted separately.",
+    "",
+    cloud ? "Cloud AI Terms:" : "Hardware Terms:",
+    ...(cloud ? [
+      `1. Cloud AI is pay as you go. AI Units (AU) can be topped up at any time at SGD ${CONFIG.auPack} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU and are valid for ${TC.auValidMonths} months from each top-up.`,
+      "2. Workflows that use Cloud AI pause when the AU balance reaches zero. Unused AU are not refundable.",
+    ] : [
+      `1. Each Enterprise AI Box is sized for about ${CONFIG.usersPerBox} concurrent users. This is a sizing guide, not a performance guarantee.`,
+      "2. The Enterprise AI Box is covered by the maker's warranty, and Party B files warranty claims on Party A's behalf. Workflows on the box pause while it is under repair unless Yonyou Care is purchased.",
+      "3. Ownership passes to Party A on full payment; risk passes on delivery.",
+      "4. The hardware and model named above may be replaced by an equivalent.",
+    ]),
+    "",
+    "Implementation Terms:",
+    "1. The man-day cost stated above is an estimate, based on our rapid implementation methodology. Any additional man-days required beyond the estimated scope will incur separate charges and/or require a supplementary contract.",
+    "2. If the contract is terminated due to reasons attributable to Party A, Party A agrees to compensate Party B for the service fees corresponding to the number of confirmed man-days delivered.",
+    "3. If Party B is unable to fulfill the agreed requirements due to its own fault, both parties shall engage in good-faith discussions to mutually determine an appropriate refund or adjustment to the charges. The total refund shall not exceed 25% of the implementation services fee (Part C) paid by Party A.",
+    "4. Any additional development or customizations required beyond the agreed scope will be evaluated after the requirements are confirmed. A separate assessment and quotation will be provided upon confirmation of the final requirements.",
+    "5. Party A shall cooperate timely with required testing, data preparation, user testing, and acceptance activities. Delay caused by Party A shall not be deemed as delay by Party B.",
+    `6. UAT is accepted on Party A's sign-off, or ${TC.acceptDays} business days after UAT handover if no critical defect is reported, or on first production use, whichever comes first.`,
+    `7. Party B fixes defects reported within ${TC.warrantyDays} days after go-live at no charge.`,
+    "8. AI output is prepared for Party A's review and approval before it is posted, sent or paid, except for automatic actions agreed in the workflow specification."];
+  termLines.forEach(line => {
+    if (!line) { r++; return; }
+    const head = line.endsWith(":"), style = head ? st.label : st.terms;
+    sh.cell(r, 1, line, style).merge(r, 1, r, 8, style).height(r, head ? 17 : wrapHeight(line, FULL_CHARS, 15)); r++;
+  });
+  r++;
+
+  // Signatures
+  sh.cell(r, 1, "Confirmed and Accepted by:", st.label).cell(r, 5, "Confirmed and Accepted by:", st.label); r += 5;
+  sh.cell(r, 1, "____________________________").cell(r, 5, "____________________________"); r++;
+  sh.cell(r, 1, "Authorized Signature").cell(r, 5, "YONYOU NETWORK TECHNOLOGY (SINGAPORE) PRIVATE LIMITED").merge(r, 5, r, 8); r++;
+  sh.cell(r, 1, "(Company Stamp)").cell(r, 5, "(Company Stamp)"); r++;
+  sh.cell(r, 1, "(Date)").cell(r, 5, "(Date)");
+
+  const sheetXml = sh.xml([6, 22, 10, 10, 10, 14, 14, 16], r);
+  const files = [
+    { name: "[Content_Types].xml", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: "_rels/.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: "xl/workbook.xml", text: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Quotation" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">Quotation!$A$1:$H$${r}</definedName></definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", text: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: "xl/styles.xml", text: styles.xml() },
+    { name: "xl/worksheets/sheet1.xml", text: sheetXml },
+  ];
+  return zipBlob(files);
+}
+
+function quotationFileName() {
+  const company = S.client.company.trim().replace(/[\\/:*?"<>|]+/g, " ").trim();
+  return company ? `Quotation for ${company}.xlsx` : "YonWork Quotation.xlsx";
+}
+
+function downloadQuotation() {
+  const url = URL.createObjectURL(buildQuotationXlsx());
+  const a = document.createElement("a");
+  a.href = url; a.download = quotationFileName();
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+const clamp = (n, max) => Math.min(Math.max(Number.isFinite(n) ? Math.trunc(n) : 0, 0), max);
+const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let toastTimer;
+function toast(msg) {
+  const el = $("toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2800);
+}
+function goAgent() {
+  const s = $("secAgent");
+  s.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "center" });
+  s.classList.remove("nudge"); void s.offsetWidth; s.classList.add("nudge");
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-toggle],[data-open],[data-filter],[data-step],[data-lang],[data-mode],[data-erp],[data-agent],[data-close],[data-goto],[data-view],[data-goto-id],[data-tref],[data-print]");
+  if (!el) return;
+  const d = el.dataset;
+  if (d.view) { if (viewNow() !== d.view) location.hash = d.view; return; }
+  if (d.gotoId) { goTo(d.gotoId); return; }
+  if (d.tref) { pendingScroll = "t-" + d.tref; location.hash = "terms"; return; }
+  if ("print" in d) { window.print(); return; }
+  if (d.toggle) { const id = d.toggle; S.selected.has(id) ? S.selected.delete(id) : S.selected.add(id); }
+  else if (d.open) S.open = d.open;
+  else if ("close" in d) S.open = null;
+  else if (d.filter) S.filter = d.filter;
+  else if (d.step) { const k = d.step; S[k] = clamp(S[k] + +d.d, MAX[k]); }
+  else if (d.mode) S.aiMode = d.mode;
+  else if (d.lang) S.lang = d.lang;
+  else if (d.erp) S.erp = d.erp;
+  else if (d.agent) { const id = d.agent; S.agents.has(id) ? S.agents.delete(id) : S.agents.add(id); }
+  else if (d.goto) { goAgent(); return; }
+  render();
+});
+let pendingScroll = null;
+const goTo = id => { const el = $(id); if (el) el.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" }); };
+function spy() {
+  const toc = $(viewNow() === "faq" ? "faqToc" : "termsToc"); if (!toc) return;
+  const btns = [...toc.querySelectorAll("[data-goto-id]")];
+  let cur = btns[0];
+  btns.forEach(b => { const s = $(b.dataset.gotoId); if (s && s.getBoundingClientRect().top < 140) cur = b; });
+  btns.forEach(b => b.classList.toggle("on", b === cur));
+}
+window.addEventListener("scroll", () => { if (viewNow() !== "estimator") spy(); }, { passive: true });
+window.addEventListener("hashchange", () => {
+  if (S.open) S.open = null;
+  render();
+  if (pendingScroll) { const id = pendingScroll; pendingScroll = null; requestAnimationFrame(() => { const el = $(id); if (el) el.scrollIntoView({ block: "start" }); spy(); }); }
+  else window.scrollTo(0, 0);
+});
+$("faqQ").addEventListener("input", e => { S.faqQ = e.target.value; renderDocs("faq"); spy(); });
+$("secAgent").addEventListener("animationend", e => e.currentTarget.classList.remove("nudge"));
+$("sheet").addEventListener("click", e => { if (e.target === e.currentTarget) { S.open = null; render(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.open) { S.open = null; render(); } });
+const MAX = { users: CONFIG.maxUsers, boxes: CONFIG.maxBoxes, packs: CONFIG.maxPacks };
+["users", "boxes", "packs"].forEach(k => {
+  const input = $(k);
+  input.addEventListener("focus", () => input.select());
+  input.addEventListener("input", () => { S[k] = clamp(parseInt(input.value.replace(/\D/g, "") || "0", 10), MAX[k]); render(); });
+  input.addEventListener("blur", () => { input.value = S[k]; });
+});
+$("maint").addEventListener("change", e => { S.maint = e.target.checked; render(); });
+["company", "contact", "email", "manager"].forEach(k => {
+  $(k).value = S.client[k] || "";
+  $(k).addEventListener("input", e => { S.client[k] = e.target.value; save(); });
+});
+$("reset").addEventListener("click", () => {
+  if (!confirm(L("Clear the quotation and client details?", "清空报价和客户信息？"))) return;
+  Object.assign(S, { users: 0, boxes: 0, packs: 0, aiMode: "local", erp: "ys", maint: true, open: null, filter: "all", client: { company: "", contact: "", email: "", manager: "" } });
+  S.selected.clear(); S.agents.clear();
+  ["company", "contact", "email", "manager"].forEach(k => $(k).value = "");
+  render();
+});
+$("xlsxBtn").addEventListener("click", () => {
+  if (totals().needAgent) { toast(t("exportBlocked")); goAgent(); return; }
+  downloadQuotation();
+});
+render();
+</script>
+</body>
+</html>
