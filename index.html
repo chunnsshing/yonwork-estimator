@@ -108,6 +108,8 @@ button{-webkit-tap-highlight-color:transparent}
 .switch input::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.18);transition:transform .3s var(--ease)}
 .switch input:checked{background:var(--red)}
 .switch input:checked::after{transform:translateX(20px)}
+.switch.care{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.switch.care .tag{vertical-align:middle;margin-left:4px}
 .label{font-weight:650;color:var(--ink);font-size:14px}
 
 /* section 3: chosen workflows */
@@ -342,6 +344,7 @@ body:not(.v-estimator) .bar{display:none!important}
               <div class="stepper"><button data-step="boxes" data-d="-1" aria-label="−">−</button><input id="boxes" inputmode="numeric" class="num" aria-label="AI Boxes"><button data-step="boxes" data-d="1" aria-label="+">+</button></div>
               <div class="caption"><span id="hwNote"></span><span class="tip">💡 <span data-t="boxHint"></span></span></div>
             </div>
+            <label class="switch care"><span><span class="label"><span data-t="inclCare"></span> <span class="tag yearly" data-t="yearly"></span></span><br><span class="caption" id="careNote"></span></span><input type="checkbox" id="care"></label>
           </div>
           <div id="cloudBox">
             <div class="ctl">
@@ -463,6 +466,7 @@ const TEXT = {
   exportBlocked: ["Select at least 1 agent in Section 4 before exporting.", "导出前请在第 4 部分至少选择 1 个智能体。"],
   perYear: ["/ year", "/ 年"],
   inclMaint: ["Include maintenance", "包含运维服务"],
+  inclCare: ["Add Yonyou Care", "加购 Yonyou Care"], sCare: ["Yonyou Care", "Yonyou Care"],
   catalogue: ["Workflow catalogue", "工作流目录"],
   catalogueNote: ["Tick a workflow to add it to the quotation. Click a card for what it does, how it works and what it costs.", "勾选工作流即加入报价。点击卡片查看功能、运作流程和费用。"],
   all: ["All", "全部"], selected: ["Selected", "已选"], details: ["Details", "详情"],
@@ -496,7 +500,7 @@ const S = {
   erp: ERPS.some(e => e[0] === store.get("erp", "ys")) ? store.get("erp", "ys") : "ys",
   selected: new Set(store.get("selected", []).filter(id => WORKFLOWS.some(w => w.id === id))),
   agents: new Set(store.get("agents", []).filter(id => AGENTS.some(a => a.id === id))),
-  maint: store.get("maint", true), filter: "all", open: null, faqQ: "",
+  maint: store.get("maint", true), care: store.get("care", false), filter: "all", open: null, faqQ: "",
   client: store.get("client", { company: "", contact: "", email: "", manager: "" }),
 };
 const zh = () => S.lang === "zh";
@@ -506,7 +510,7 @@ const r2 = n => Math.round(n * 100) / 100;
 const sgd = n => "S$" + Number(n).toLocaleString("en-SG", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const $ = id => document.getElementById(id);
-const save = () => { store.set("users", S.users); store.set("boxes", S.boxes); store.set("aiMode", S.aiMode); store.set("packs", S.packs); store.set("erp", S.erp); store.set("selected", [...S.selected]); store.set("agents", [...S.agents]); store.set("maint", S.maint); store.set("client", S.client); store.set("lang", S.lang); };
+const save = () => { store.set("users", S.users); store.set("boxes", S.boxes); store.set("aiMode", S.aiMode); store.set("packs", S.packs); store.set("erp", S.erp); store.set("selected", [...S.selected]); store.set("agents", [...S.agents]); store.set("maint", S.maint); store.set("care", S.care); store.set("client", S.client); store.set("lang", S.lang); };
 const erpName = () => { const e = ERPS.find(e => e[0] === S.erp); return `${e[2]} (${e[1]})`; };
 
 const title = w => L(w.en, w.zh), alt = w => zh() ? w.en : w.zh;
@@ -524,9 +528,10 @@ function totals() {
   const workflow = chosen.reduce((a, w) => a + (w.price || 0), 0);
   const agent = agents.reduce((a, x) => a + x.price, 0);
   const maintenance = S.maint ? r2(workflow * CONFIG.maintRate) : 0;
-  const recurring = r2(licence + agent + maintenance), oneTime = hardware + workflow;
+  const care = S.care && S.aiMode === "local" ? S.boxes * TC.care : 0;   // Yonyou Care: yearly, per AI Box, Local AI only
+  const recurring = r2(licence + care + agent + maintenance), oneTime = hardware + workflow;
   const tbc = chosen.filter(w => w.tbc && w.price != null), none = chosen.filter(w => w.price == null);
-  return { ncc, chosen, agents, licence, hardware, workflow, agent, maintenance, recurring, oneTime, first: r2(recurring + oneTime),
+  return { ncc, chosen, agents, licence, care, partA: licence + care, hardware, workflow, agent, maintenance, recurring, oneTime, first: r2(recurring + oneTime),
     three: r2(recurring * CONFIG.years + oneTime), tbc, tbcSum: tbc.reduce((a, w) => a + w.price, 0), none, needAgent: ncc && !agents.length };
 }
 
@@ -612,6 +617,9 @@ function render() {
   document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === S.aiMode));
   $("localBox").hidden = S.aiMode !== "local"; $("cloudBox").hidden = S.aiMode !== "cloud";
   $("auTotal").textContent = L(`${(S.packs * CONFIG.auPerPack).toLocaleString("en-SG")} AU to start. Pay as you go: the client tops up anytime at ${sgd(CONFIG.auPack)} per ${CONFIG.auPerPack.toLocaleString("en-SG")} AU.`, `首次 ${(S.packs * CONFIG.auPerPack).toLocaleString("en-SG")} AU。按需付费：客户可随时充值，每 ${CONFIG.auPerPack.toLocaleString("en-SG")} AU ${sgd(CONFIG.auPack)}。`);
+  $("care").checked = S.care;
+  $("careNote").textContent = L(`${sgd(TC.care)} per AI Box per year${T.care ? ` × ${S.boxes} = ${sgd(T.care)}` : ""}. We handle warranty claims, run your workflows on Cloud AI at our cost while a box is repaired, and replace or lend a unit after ${TC.careRepairDays} business days.`,
+    `每台 AI 一体机每年 ${sgd(TC.care)}${T.care ? ` × ${S.boxes} = ${sgd(T.care)}` : ""}。我们负责保修申请；一体机维修期间以云端 AI 运行您的工作流（费用由我们承担）；超过 ${TC.careRepairDays} 个工作日未修复则提供替换机或借用机。`);
   const tag2 = $("tag2"); tag2.className = "tag " + (S.aiMode === "cloud" ? "payg" : "onetime"); tag2.textContent = t(S.aiMode === "cloud" ? "payg" : "onetime");
 
   // 3 · Workflow
@@ -641,7 +649,7 @@ function render() {
   // Totals
   $("tFirst").textContent = ap + sgd(T.first);
   $("heroAlert").hidden = !T.needAgent;
-  $("recSub").textContent = (T.ncc ? "1 + 4 + 5" : "1 + 4") + L(" · yearly", " · 每年");
+  $("recSub").textContent = (T.care ? "1 + 2 + " : "1 + ") + (T.ncc ? "4 + 5" : "4") + L(" · yearly", " · 每年");
   $("tRec").textContent = (S.maint ? ap : "") + sgd(T.recurring);
   $("tOne").textContent = ap + sgd(T.oneTime);
   $("tThree").textContent = ap + sgd(T.three);
@@ -652,6 +660,7 @@ function render() {
     : L("All prices in SGD, excluding GST.", "所有价格以新元计，不含消费税（GST）。")) + paygNote;
 
   const parts = [[1, "s1", "yearly", T.licence, "--c1"], [2, "s2", S.aiMode === "cloud" ? "payg" : "onetime", T.hardware, "--c2"], [3, "s3", "onetime", T.workflow, "--c3", ap]];
+  if (T.care) parts.splice(2, 0, [2, "sCare", "yearly", T.care, "--c2"]);
   if (T.ncc) parts.push([4, "sAg", "yearly", T.agent, "--c4"]);
   parts.push([T.ncc ? 5 : 4, "sMt", "yearly", T.maintenance, "--c5", ap, !S.maint]);
   $("stack").innerHTML = T.first > 0 ? parts.filter(p => p[3] > 0).map(p => `<i style="flex-grow:${p[3]};background:var(${p[4]})" title="${p[0]} · ${esc(t(p[1]))}: ${sgd(p[3])} (${Math.round(p[3] / T.first * 100)}%)"></i>`).join("") : "";
@@ -684,10 +693,10 @@ function render() {
 const TC = {
   version: "1.0", effective: "17 November 2026",
   care: 4000, careBuyDays: 30, careRepairDays: 10,
-  priceFixMonths: 12, priceNotice: 30, renewNotice: 60,
+  priceFixMonths: 12, priceNotice: 90, renewNotice: 60,
   payDays: 30, suspendDays: 30, liabilityMonths: 12,
   acceptDays: 10, warrantyDays: 30, deemedGoLiveDays: 30, pauseDays: 30, tbcTolerance: 15,
-  thirdPartyDays: 2, auValidMonths: 12, exportDays: 30, cureDays: 30, doaDays: 7, supportYears: 3,
+  thirdPartyDays: 2, auValidMonths: 12, exportDays: 30, cureDays: 30, doaDays: 7, boxWarrantyYears: 1,
 };
 
 function termsData() {
@@ -745,18 +754,16 @@ function termsData() {
       `The Client provides a suitable site: stable power with a UPS, cooling, a network connection and a secure location.`,
       `Ownership passes to the Client on full payment. Risk passes on delivery, and the Client insures the AI Box from then.`,
       `An AI Box found faulty within ${TC.doaDays} days of delivery is replaced.`,
-      `The AI Box is covered by the maker's warranty. Yonyou files warranty claims on the Client's behalf. Without Yonyou Care, shipping and re-setup after a repair are charged.`,
+      `The AI Box is covered by the maker's warranty for ${TC.boxWarrantyYears} year${TC.boxWarrantyYears === 1 ? "" : "s"} from delivery. Yonyou files warranty claims on the Client's behalf. Without Yonyou Care, shipping and re-setup after a repair are charged.`,
       `While an AI Box is under repair, Workflows that run on it pause. With the Client's written consent, they can switch to Cloud AI at the Client's own AU cost.`,
-      `Before an AI Box leaves the Client's site for repair, the Client chooses whether its drive is wiped or kept.`,
       `Repairs or replacements outside warranty are quoted.`,
       `The Client allows Yonyou secure remote access for support. Without it, support may take longer.`,
       `Each AI Box is sized for about ${CONFIG.usersPerBox} concurrent users. This is a sizing guide, not a performance guarantee.`,
-      `Yonyou supports each AI Box model and its standard AI model for at least ${TC.supportYears} years from delivery.`,
       `Hardware and models named in a quotation may be replaced by equivalents.`,
       `The AI Box replaces the AI model layer only. The YonWork platform still needs an internet connection, and workflow orchestration and run logs stay on the platform.`,
     ] },
     { t: "Yonyou Care (optional)", c: [
-      `Yonyou Care costs ${sgd(TC.care).replace("S$", "SGD ")} per AI Box per year. It can be bought with the AI Box or within ${TC.careBuyDays} days of delivery, and renews yearly until the end of support under clause 7.12.`,
+      `Yonyou Care costs ${sgd(TC.care).replace("S$", "SGD ")} per AI Box per year. It can be bought with the AI Box or within ${TC.careBuyDays} days of delivery, and renews yearly.`,
       `Yonyou Care covers: handling warranty claims with the maker; shipping both ways; a Cloud AI stand-in, with AU paid by Yonyou, until the AI Box is repaired or replaced; a replacement or loan unit if the AI Box is not repaired within ${TC.careRepairDays} business days; and re-setup of the model and Workflows.`,
       `The Cloud AI stand-in sends data to a cloud model, so it needs the Client's written consent, given with the Yonyou Care order. Without consent, Workflows pause during the repair.`,
       `Accidental damage, such as a drop, liquid or a power surge, is covered subject to the incident fee stated in the Yonyou Care order.`,
@@ -781,7 +788,6 @@ function termsData() {
       `Agents are available to Clients on NC Cloud (NCC). A Client on NCC keeps at least one Agent.`,
       `The yearly Agent fee includes setup, configuration within the scope agreed for that Agent, support, and fixes needed after NCC upgrades.`,
       `Agents use the Client's AI Box or Cloud AI. AU used by Agents are charged as normal.`,
-      `Agents can be removed at renewal.`,
       `Agents support the NCC versions on Yonyou's supported list.`,
       `If the Client moves off NCC, Agents end at the end of the term. Moving Workflows to the new system is quoted.`,
     ] },
@@ -893,8 +899,8 @@ function faqData() {
     ] },
     { id: "box", t: ["AI Box and Yonyou Care", "AI 一体机与 Yonyou Care"], qs: [
       ["What happens if the AI Box breaks?", "AI 一体机坏了怎么办？",
-       "It's covered by the maker's warranty and we file the claim for you. While it's under repair, workflows on the box pause; with your consent they can switch to Cloud AI at your own AU cost. Without Yonyou Care, shipping and re-setup are charged.",
-       "由原厂保修覆盖，我们代为提出保修申请。维修期间，运行在一体机上的工作流暂停；经您同意，可切换到云端 AI，AU 费用由您承担。未购买 Yonyou Care 时，运输和重新部署另行收费。", 7],
+       `It's covered by the maker's warranty for ${TC.boxWarrantyYears} year${TC.boxWarrantyYears === 1 ? "" : "s"} from delivery, and we file the claim for you. While it's under repair, workflows on the box pause; with your consent they can switch to Cloud AI at your own AU cost. Without Yonyou Care, shipping and re-setup are charged.`,
+       `自交付起享有 ${TC.boxWarrantyYears} 年原厂保修，我们代为提出保修申请。维修期间，运行在一体机上的工作流暂停；经您同意，可切换到云端 AI，AU 费用由您承担。未购买 Yonyou Care 时，运输和重新部署另行收费。`, 7],
       ["What is Yonyou Care?", "什么是 Yonyou Care？",
        `An optional plan at ${care} per AI Box per year. We handle the warranty claim and shipping, run your workflows on Cloud AI at our cost until the box is repaired or replaced, replace or lend a unit if repair takes more than ${TC.careRepairDays} business days, and set everything up again.`,
        `可选服务，每台 AI 一体机每年 ${care}。我们负责保修申请和往返运输，在一体机修复或更换前以云端 AI 运行您的工作流（费用由我们承担），维修超过 ${TC.careRepairDays} 个工作日则提供替换机或借用机，并完成重新部署。`, 8],
@@ -923,9 +929,6 @@ function faqData() {
       ["What does the yearly agent fee include?", "智能体年费包含什么？",
        "Setup, configuration within the agreed scope, support, and fixes after NCC upgrades. The AI the agent uses runs on your AI Box or Cloud AI, and AU are charged as normal.",
        "部署、约定范围内的配置、支持服务，以及 NCC 升级后的修复。智能体使用的 AI 运行在您的一体机或云端 AI 上，AU 照常计费。", 10],
-      ["Can we remove an agent?", "可以取消智能体吗？",
-       "At renewal. Clients on NCC keep at least one agent.",
-       "可在续约时取消。NCC 客户须保留至少一个智能体。", 10],
     ] },
     { id: "implementation", t: ["Implementation", "实施与验收"], qs: [
       ["When is UAT accepted?", "UAT 何时视为验收？",
@@ -1204,8 +1207,11 @@ function buildQuotationXlsx() {
   const a1 = item("A.1", "YonWork User License Fee",
     ` - Annual subscription fee for ${S.users} named user${S.users === 1 ? "" : "s"}, providing access to the YonWork workflows deployed for ${company}.`,
     S.users, st.qty, CONFIG.licence);
+  const aLast = T.care ? item("A.2", "Yonyou Care (per Enterprise AI Box)",
+    ` - Optional yearly plan for ${S.boxes} Enterprise AI Box${S.boxes === 1 ? "" : "es"}. Yonyou handles warranty claims and shipping, runs the workflows on Cloud AI at Yonyou's cost while a box is repaired, provides a replacement or loan unit if a box is not repaired within ${TC.careRepairDays} business days, and sets the model and workflows up again.`,
+    S.boxes, st.qty, TC.care) : a1;
   sh.cell(r, 1, "Subtotal (Yearly)", st.sub).merge(r, 1, r, 7, st.sub);
-  const rowA = r; sh.cell(r, 8, T.licence, st.subMoney, `SUM(H${a1}:H${a1})`).height(r, 19); r += 2;
+  const rowA = r; sh.cell(r, 8, T.partA, st.subMoney, `SUM(H${a1}:H${aLast})`).height(r, 19); r += 2;
 
   // Part B
   const cloud = S.aiMode === "cloud";
@@ -1280,7 +1286,7 @@ function buildQuotationXlsx() {
   const sumLine = (label, value, f, ls = st.line, ms = st.lineMoney) => {
     sh.cell(r, 1, label, ls).merge(r, 1, r, 7, ls).cell(r, 8, value, ms, f).height(r, 19); return r++;
   };
-  const sA = sumLine("Part A - Product Cost (Annual Recurring Cost)", T.licence, `H${rowA}`);
+  const sA = sumLine("Part A - Product Cost (Annual Recurring Cost)", T.partA, `H${rowA}`);
   const sB = sumLine(cloud ? "Part B - Cloud AI Usage (Starting Top-Up, Pay As You Go)" : "Part B - Hardware Cost (One-Time Cost)", T.hardware, `H${rowB}`);
   const sC = sumLine("Part C - Implementation Services Fee (One-Time Cost)", T.workflow, `H${rowC}`);
   const sAg = T.ncc ? sumLine("Part D - AI Agent Cost (Annual Recurring Cost)", T.agent, `H${rowAg}`) : null;
@@ -1300,8 +1306,8 @@ function buildQuotationXlsx() {
     sh.cell(r, 3, amount, st.payAmt, f).cell(r, 4, text, st.payText).merge(r, 4, r, 8, st.payText).height(r, wrapHeight(text, 70, 16)); r++;
   };
   pay(T.recurring, `H${rec}`, T.ncc
-    ? "——100% of the yearly licence, AI agent and maintenance fees (Parts A, D and E) upon contract signing, and in advance for each renewal. The first 12-month term of agents and maintenance starts on go-live."
-    : "——100% of the yearly licence and maintenance fees (Parts A and D) upon contract signing, and in advance for each renewal. The first 12-month term of maintenance starts on go-live.");
+    ? `——100% of the yearly licence${T.care ? ", Yonyou Care" : ""}, AI agent and maintenance fees (Parts A, D and E) upon contract signing, and in advance for each renewal. The first 12-month term of agents and maintenance starts on go-live.`
+    : `——100% of the yearly licence${T.care ? ", Yonyou Care" : ""} and maintenance fees (Parts A and D) upon contract signing, and in advance for each renewal. The first 12-month term of maintenance starts on go-live.`);
   pay(T.hardware, `H${sB}`, cloud ? "——100% of the starting AI Unit top-up (Part B) upon contract signing. Later top-ups are paid when purchased." : "——100% of the hardware cost (Part B) upon contract signing.");
   pay(T.workflow * 0.5, `H${sC}*50%`, "——50% of the implementation services fee (Part C) upon contract signing.");
   pay(T.workflow * 0.3, `H${sC}*30%`, "——30% of the implementation services fee upon User Acceptance Testing (UAT).");
@@ -1331,7 +1337,7 @@ function buildQuotationXlsx() {
       "2. Workflows that use Cloud AI pause when the AU balance reaches zero. Unused AU are not refundable.",
     ] : [
       `1. Each Enterprise AI Box is sized for about ${CONFIG.usersPerBox} concurrent users. This is a sizing guide, not a performance guarantee.`,
-      "2. The Enterprise AI Box is covered by the maker's warranty, and Party B files warranty claims on Party A's behalf. Workflows on the box pause while it is under repair unless Yonyou Care is purchased.",
+      `2. The Enterprise AI Box is covered by the maker's warranty for ${TC.boxWarrantyYears} year${TC.boxWarrantyYears === 1 ? "" : "s"} from delivery, and Party B files warranty claims on Party A's behalf. Workflows on the box pause while it is under repair unless Yonyou Care is purchased.`,
       "3. Ownership passes to Party A on full payment; risk passes on delivery.",
       "4. The hardware and model named above may be replaced by an equivalent.",
     ]),
@@ -1444,6 +1450,7 @@ const MAX = { users: CONFIG.maxUsers, boxes: CONFIG.maxBoxes, packs: CONFIG.maxP
   input.addEventListener("blur", () => { input.value = S[k]; });
 });
 $("maint").addEventListener("change", e => { S.maint = e.target.checked; render(); });
+$("care").addEventListener("change", e => { S.care = e.target.checked; render(); });
 ["company", "contact", "email", "manager"].forEach(k => {
   $(k).value = S.client[k] || "";
   $(k).addEventListener("input", e => { S.client[k] = e.target.value; save(); });
